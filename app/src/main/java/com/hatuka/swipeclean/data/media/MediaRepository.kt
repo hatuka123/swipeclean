@@ -4,6 +4,7 @@ import android.net.Uri
 import com.hatuka.swipeclean.core.media.BucketAggregator
 import com.hatuka.swipeclean.core.media.BucketList
 import com.hatuka.swipeclean.core.media.MediaFilter
+import com.hatuka.swipeclean.core.media.MediaRow
 import com.hatuka.swipeclean.core.media.MediaType
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +20,12 @@ interface MediaRepository {
     fun galleryChanges(): Flow<Unit>
 
     suspend fun loadBuckets(filter: MediaFilter): BucketList
+
+    /** All items of one bucket (or all buckets when [bucketId] is null), unsorted. */
+    suspend fun loadRows(bucketId: Long?, filter: MediaFilter): List<MediaRow>
+
+    /** Subset of [ids] that still exists in MediaStore. */
+    suspend fun visibleIds(ids: Collection<Long>): Set<Long>
 
     fun uriOf(type: MediaType, id: Long): Uri
 }
@@ -37,6 +44,12 @@ class MediaStoreRepository @Inject constructor(
         val types = MediaType.entries.filter(filter::includes).toSet()
         BucketAggregator.aggregate(source.queryRows(types).asSequence(), filter)
     }
+
+    override suspend fun loadRows(bucketId: Long?, filter: MediaFilter): List<MediaRow> = withContext(io) {
+        source.queryRows(MediaType.entries.filter(filter::includes).toSet(), bucketId)
+    }
+
+    override suspend fun visibleIds(ids: Collection<Long>): Set<Long> = withContext(io) { source.visibleIds(ids) }
 
     override fun uriOf(type: MediaType, id: Long): Uri = source.contentUri(type, id)
 

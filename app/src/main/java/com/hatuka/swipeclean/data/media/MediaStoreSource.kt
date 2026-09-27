@@ -31,11 +31,17 @@ class MediaStoreSource @Inject constructor(
 
     fun contentUri(type: MediaType, id: Long): Uri = ContentUris.withAppendedId(collection(type), id)
 
-    /** Every visible image and video, reduced to the columns the folder list needs. */
-    fun queryRows(types: Set<MediaType>): List<MediaRow> {
+    /**
+     * Every visible image and video (optionally of one bucket), reduced to the columns the folder
+     * list and the swipe deck need. One lightweight cursor pass: ~50k rows take well under a
+     * second and a few MB, and sorting/filtering then happens in memory (see DeckBuilder).
+     */
+    fun queryRows(types: Set<MediaType>, bucketId: Long? = null): List<MediaRow> {
         val rows = ArrayList<MediaRow>()
+        val selection = bucketId?.let { "${MediaStore.MediaColumns.BUCKET_ID} = ?" }
+        val args = bucketId?.let { arrayOf(it.toString()) }
         for (type in types) {
-            resolver.query(collection(type), ROW_PROJECTION, null, null, null)?.use { c ->
+            resolver.query(collection(type), ROW_PROJECTION, selection, args, null)?.use { c ->
                 val id = c.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
                 val bucketId = c.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_ID)
                 val bucketName = c.getColumnIndexOrThrow(MediaStore.MediaColumns.BUCKET_DISPLAY_NAME)
@@ -61,6 +67,24 @@ class MediaStoreSource @Inject constructor(
         return rows
     }
 
+    /**
+     * Which of [ids] MediaStore still returns. Trashed and deleted items are not returned by
+     * normal queries, so a missing ID means the item is gone (or in the system trash).
+     */
+    fun visibleIds(ids: Collection<Long>): Set<Long> {
+        val found = HashSet<Long>()
+        for (chunk in ids.chunked(MAX_SQL_ARGS)) {
+            val selection = "${MediaStore.MediaColumns._ID} IN (${chunk.joinToString(",") { "?" }})"
+            val args = chunk.map(Long::toString).toTypedArray()
+            for (type in MediaType.entries) {
+                resolver.query(collection(type), ID_PROJECTION, selection, args, null)?.use { c ->
+                    while (c.moveToNext()) found += c.getLong(0)
+                }
+            }
+        }
+        return found
+    }
+
     /** Emits whenever images or videos change (added, deleted, moved) outside or inside the app. */
     fun changes(): Flow<Unit> = callbackFlow {
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
@@ -73,6 +97,8 @@ class MediaStoreSource @Inject constructor(
     }
 
     private companion object {
+        const val MAX_SQL_ARGS = 500
+        val ID_PROJECTION = arrayOf(MediaStore.MediaColumns._ID)
         val ROW_PROJECTION = arrayOf(
             MediaStore.MediaColumns._ID,
             MediaStore.MediaColumns.BUCKET_ID,

@@ -38,7 +38,47 @@
     <string name="filter_videos">סרטונים</string>
     <string name="filter_both">הכול</string>
 
-    <!-- Swipe (placeholder until phase 2) -->
-    <string name="swipe_coming">מסך ההחלקה יגיע בבנייה הבאה.</string>
+    <!-- Swipe -->
+    <plurals name="items_left">
+        <item quantity="one">נותר פריט אחד</item>
+        <item quantity="two">נותרו %1$s</item>
+        <item quantity="other">נותרו %1$s</item>
+    </plurals>
+    <string name="swipe_reviewed">נסקרו %1$s</string>
+    <string name="swipe_to_delete">למחיקה %1$s</string>
+    <string name="swipe_frees">יתפנו %1$s</string>
+    <string name="item_info">%1$s · %2$s · %3$s</string>
+    <string name="action_keep">לשמור</string>
+    <string name="action_delete">למחוק</string>
+    <string name="action_move">להעביר</string>
+    <string name="action_mark_delete">סימון למחיקה</string>
+    <string name="action_undo">ביטול פעולה</string>
+    <string name="video_unmute">הקשה להפעלת הקול</string>
+    <string name="video_mute">הקשה להשתקה</string>
+    <string name="swipe_done_title">סיימת כאן!</string>
+    <string name="swipe_nothing_title">אין כאן עוד מה לסקור</string>
+    <string name="swipe_done_body">פריטים שסימנת למחיקה מחכים בסל. שום דבר לא נמחק עד שתאשר שם.</string>
+    <string name="open_bin">סל</string>
+    <string name="open_bin_count">לבדוק את הסל (%1$s · %2$s)</string>
+    <string name="back_to_folders">חזרה לתיקיות</string>
     <string name="back">חזרה</string>
+
+    <!-- Bin -->
+    <string name="bin_title">סל</string>
+    <string name="bin_empty">הסל ריק</string>
+    <string name="bin_empty_body">פריטים שהחלקת שמאלה מחכים כאן עד שתמחק אותם.</string>
+    <string name="bin_delete_all">למחוק הכול · %1$s</string>
+    <string name="bin_trash_note">הפריטים יעברו לסל המחזור של המערכת, ואפשר לשחזר אותם משם כ־30 יום. הקשה על פריט משנה את ההחלטה; לחיצה ארוכה בוחרת כמה פריטים.</string>
+    <string name="bin_permanent_note">הפריטים יימחקו לצמיתות (בלי סל המחזור של המערכת). הקשה על פריט משנה את ההחלטה; לחיצה ארוכה בוחרת כמה פריטים.</string>
+    <string name="bin_permanent_option">מחיקה לצמיתות (בלי סל המחזור של המערכת)</string>
+    <string name="bin_selected">%1$s נבחרו</string>
+    <string name="bin_keep_selected">לשמור את הנבחרים</string>
+    <string name="bin_clear_selection">ביטול הבחירה</string>
+    <string name="bin_result_deleted">נמחקו %1$s פריטים · התפנו %2$s</string>
+    <string name="bin_result_failed">לא ניתן היה למחוק %1$s פריטים, והם נשארו בסל</string>
+    <string name="bin_result_cancelled">בוטל – שום דבר לא נמחק</string>
+    <string name="decision_title">שינוי ההחלטה</string>
+    <string name="decision_keep">לשמור</string>
+    <string name="decision_leave">להשאיר בסל</string>
+    <string name="more_options">אפשרויות נוספות</string>
 </resources>

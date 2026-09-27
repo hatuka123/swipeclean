@@ -7,7 +7,9 @@ import com.hatuka.swipeclean.core.access.MediaAccess
 import com.hatuka.swipeclean.core.media.BucketList
 import com.hatuka.swipeclean.core.media.MediaFilter
 import com.hatuka.swipeclean.core.media.MediaType
+import com.hatuka.swipeclean.data.db.BinSummary
 import com.hatuka.swipeclean.data.media.MediaRepository
+import com.hatuka.swipeclean.data.review.DecisionRepository
 import com.hatuka.swipeclean.permissions.MediaAccessMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,7 +35,11 @@ data class HomeUiState(
 class HomeViewModel @Inject constructor(
     private val repository: MediaRepository,
     access: MediaAccessMonitor,
+    decisions: DecisionRepository,
 ) : ViewModel() {
+
+    val binSummary: StateFlow<BinSummary> = decisions.binSummary()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BinSummary(0, 0))
 
     private val filter = MutableStateFlow(MediaFilter.BOTH)
 

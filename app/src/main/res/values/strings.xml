@@ -37,7 +37,46 @@
     <string name="filter_videos">Videos</string>
     <string name="filter_both">Both</string>
 
-    <!-- Swipe (placeholder until phase 2) -->
-    <string name="swipe_coming">The swipe screen arrives in the next build.</string>
+    <!-- Swipe -->
+    <plurals name="items_left">
+        <item quantity="one">%1$s left</item>
+        <item quantity="other">%1$s left</item>
+    </plurals>
+    <string name="swipe_reviewed">Reviewed %1$s</string>
+    <string name="swipe_to_delete">To delete %1$s</string>
+    <string name="swipe_frees">Frees %1$s</string>
+    <string name="item_info">%1$s · %2$s · %3$s</string>
+    <string name="action_keep">Keep</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_move">Move</string>
+    <string name="action_mark_delete">Mark for deletion</string>
+    <string name="action_undo">Undo</string>
+    <string name="video_unmute">Tap to unmute</string>
+    <string name="video_mute">Tap to mute</string>
+    <string name="swipe_done_title">All done here!</string>
+    <string name="swipe_nothing_title">Nothing left to review here</string>
+    <string name="swipe_done_body">Items you marked for deletion wait in the bin. Nothing is deleted until you confirm there.</string>
+    <string name="open_bin">Bin</string>
+    <string name="open_bin_count">Review the bin (%1$s · %2$s)</string>
+    <string name="back_to_folders">Back to folders</string>
     <string name="back">Back</string>
+
+    <!-- Bin -->
+    <string name="bin_title">Bin</string>
+    <string name="bin_empty">The bin is empty</string>
+    <string name="bin_empty_body">Items you swipe left wait here until you delete them.</string>
+    <string name="bin_delete_all">Delete all · %1$s</string>
+    <string name="bin_trash_note">Items go to the system trash, where they can be restored for about 30 days. Tap an item to change your decision; long-press to select several.</string>
+    <string name="bin_permanent_note">Items will be deleted permanently (the system trash is skipped). Tap an item to change your decision; long-press to select several.</string>
+    <string name="bin_permanent_option">Delete permanently (skip the system trash)</string>
+    <string name="bin_selected">%1$s selected</string>
+    <string name="bin_keep_selected">Keep selected</string>
+    <string name="bin_clear_selection">Cancel selection</string>
+    <string name="bin_result_deleted">Deleted %1$s items · freed %2$s</string>
+    <string name="bin_result_failed">%1$s items could not be deleted and stay in the bin</string>
+    <string name="bin_result_cancelled">Cancelled – nothing was deleted</string>
+    <string name="decision_title">Change your decision</string>
+    <string name="decision_keep">Keep</string>
+    <string name="decision_leave">Leave in bin</string>
+    <string name="more_options">More options</string>
 </resources>

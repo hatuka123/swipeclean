@@ -57,6 +57,7 @@ run "no-access" OnboardingTest
 # 2) Full access: folder list, filters, navigation.
 for p in $perms; do adb shell pm grant $pkg "$p" 2>/dev/null || true; done
 run "full-access" FolderListTest
+run "swipe-flow" SwipeFlowTest
 
 # 3) Android 14+: only "selected photos" access.
 if [ "$api" -ge 34 ]; then

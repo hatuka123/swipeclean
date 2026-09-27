@@ -12,9 +12,20 @@ import com.hatuka.swipeclean.core.media.BucketList
 import com.hatuka.swipeclean.core.media.BucketSummary
 import com.hatuka.swipeclean.core.media.MediaFilter
 import com.hatuka.swipeclean.core.media.MediaType
+import androidx.compose.material3.SnackbarHostState
+import com.hatuka.swipeclean.core.media.MediaRow
+import com.hatuka.swipeclean.core.review.DecisionState
+import com.hatuka.swipeclean.core.review.SessionCounters
+import com.hatuka.swipeclean.data.db.BinSummary
+import com.hatuka.swipeclean.data.db.DecisionEntity
+import com.hatuka.swipeclean.data.settings.DeleteMode
+import com.hatuka.swipeclean.ui.bin.BinContent
+import com.hatuka.swipeclean.ui.bin.BinUiState
 import com.hatuka.swipeclean.ui.home.HomeContent
 import com.hatuka.swipeclean.ui.home.HomeUiState
 import com.hatuka.swipeclean.ui.onboarding.OnboardingScreen
+import com.hatuka.swipeclean.ui.swipe.SwipeContent
+import com.hatuka.swipeclean.ui.swipe.SwipeUiState
 import com.hatuka.swipeclean.ui.theme.SwipeCleanTheme
 import org.junit.Rule
 import org.junit.Test
@@ -91,6 +102,8 @@ class ScreenshotTest(private val variant: String, private val qualifiers: String
     fun home() = shoot("home") {
         HomeContent(
             state = HomeUiState(MediaAccess.FULL, MediaFilter.BOTH, buckets, loading = false),
+            binCount = 37,
+            onOpenBin = {},
             coverUri = { _, _ -> null },
             onFilter = {},
             onOpenBucket = {},
@@ -107,10 +120,85 @@ class ScreenshotTest(private val variant: String, private val qualifiers: String
                 BucketList(buckets.all.copy(count = 12, sizeBytes = 48_000_000), listOf(buckets.buckets[0].copy(count = 12, sizeBytes = 48_000_000))),
                 loading = false,
             ),
+            binCount = 37,
+            onOpenBin = {},
             coverUri = { _, _ -> null },
             onFilter = {},
             onOpenBucket = {},
             onChangeAccess = {},
         )
     }
+
+    private val photo = MediaRow(7, 1, "Camera", "DCIM/Camera/", 3_400_000, MediaType.IMAGE, 1_690_000_000_000)
+
+    private fun swipeState(current: MediaRow?) = SwipeUiState(
+        loading = false,
+        sourceName = "Camera",
+        current = current,
+        upcoming = listOf(photo.copy(id = 8)),
+        remaining = if (current == null) 0 else 12_893,
+        counters = SessionCounters(reviewed = 11, markedForDeletion = 4, bytesToFree = 18_500_000),
+        canUndo = current != null,
+    )
+
+    @Test
+    fun swipe() = shoot("swipe") {
+        SwipeContent(
+            state = swipeState(photo),
+            bin = BinSummary(37, 210_000_000),
+            uriOf = { null },
+            onKeep = {},
+            onMarkForDeletion = {},
+            onUndo = {},
+            onUnavailable = {},
+            onBack = {},
+            onOpenBin = {},
+        )
+    }
+
+    @Test
+    fun swipeFinished() = shoot("swipe_finished") {
+        SwipeContent(
+            state = swipeState(null),
+            bin = BinSummary(37, 210_000_000),
+            uriOf = { null },
+            onKeep = {},
+            onMarkForDeletion = {},
+            onUndo = {},
+            onUnavailable = {},
+            onBack = {},
+            onOpenBin = {},
+        )
+    }
+
+    private val binItems = (1L..14L).map {
+        DecisionEntity(it, 1, "Camera", "DCIM/Camera/", it * 1_300_000, it % 5 == 0L, it, DecisionState.DELETE_PENDING, null, it)
+    }
+
+    private fun bin(state: BinUiState, name: String) = shoot(name) {
+        BinContent(
+            state = state,
+            snackbar = SnackbarHostState(),
+            uriOf = { null },
+            onBack = {},
+            onToggle = {},
+            onClearSelection = {},
+            onKeepSelected = {},
+            onKeep = {},
+            onDeleteAll = {},
+            onDeleteMode = {},
+        )
+    }
+
+    @Test
+    fun binWithItems() = bin(BinUiState(binItems, BinSummary(14, binItems.sumOf { it.sizeBytes }), loading = false), "bin")
+
+    @Test
+    fun binSelecting() = bin(
+        BinUiState(binItems, BinSummary(14, binItems.sumOf { it.sizeBytes }), selection = setOf(2L, 3L), deleteMode = DeleteMode.PERMANENT, loading = false),
+        "bin_selecting",
+    )
+
+    @Test
+    fun binEmpty() = bin(BinUiState(loading = false), "bin_empty")
 }

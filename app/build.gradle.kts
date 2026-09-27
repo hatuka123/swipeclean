@@ -72,6 +72,11 @@ android {
     }
 }
 
+ksp {
+    // Exported Room schemas are committed so future versions can write tested migrations.
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(project(":core"))
 

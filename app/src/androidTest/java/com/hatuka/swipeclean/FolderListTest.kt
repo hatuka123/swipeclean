@@ -60,7 +60,9 @@ class FolderListTest {
     fun openingAFolderNavigatesToSwipe() {
         waitForText("SeedCamera")
         compose.onNodeWithText("SeedCamera").performClick()
-        waitForText("The swipe screen arrives in the next build.")
+        compose.waitUntil(20_000) {
+            compose.onAllNodes(hasText("12 left")).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     private companion object {

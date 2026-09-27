@@ -41,6 +41,7 @@ import com.hatuka.swipeclean.core.access.MediaAccess
 import com.hatuka.swipeclean.core.media.BucketSummary
 import com.hatuka.swipeclean.core.media.MediaFilter
 import com.hatuka.swipeclean.core.media.MediaType
+import com.hatuka.swipeclean.ui.common.BinButton
 import com.hatuka.swipeclean.ui.common.MediaThumbnail
 import com.hatuka.swipeclean.ui.common.countAndSize
 
@@ -51,11 +52,15 @@ const val FOLDER_ROW_TAG = "folder:"
 fun HomeRoute(
     onOpenBucket: (bucketId: Long?, filter: MediaFilter) -> Unit,
     onChangeAccess: () -> Unit,
+    onOpenBin: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val bin by viewModel.binSummary.collectAsStateWithLifecycle()
     HomeContent(
         state = state,
+        binCount = bin.count,
+        onOpenBin = onOpenBin,
         coverUri = viewModel::coverUri,
         onFilter = viewModel::setFilter,
         onOpenBucket = { onOpenBucket(it, state.filter) },
@@ -67,13 +72,20 @@ fun HomeRoute(
 @Composable
 fun HomeContent(
     state: HomeUiState,
+    binCount: Int,
+    onOpenBin: () -> Unit,
     coverUri: (MediaType?, Long?) -> Uri?,
     onFilter: (MediaFilter) -> Unit,
     onOpenBucket: (Long?) -> Unit,
     onChangeAccess: () -> Unit,
 ) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = { BinButton(binCount, onOpenBin) },
+            )
+        },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize(),

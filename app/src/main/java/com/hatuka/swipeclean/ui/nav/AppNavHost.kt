@@ -23,15 +23,17 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.hatuka.swipeclean.core.access.MediaAccess
 import com.hatuka.swipeclean.core.media.MediaFilter
+import com.hatuka.swipeclean.ui.bin.BinRoute
 import com.hatuka.swipeclean.permissions.MediaAccessMonitor
 import com.hatuka.swipeclean.ui.home.HomeRoute
 import com.hatuka.swipeclean.ui.onboarding.OnboardingScreen
-import com.hatuka.swipeclean.ui.swipe.SwipePlaceholderScreen
+import com.hatuka.swipeclean.ui.swipe.SwipeRoute
 
 object Routes {
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
     const val SWIPE = "swipe?bucket={bucket}&filter={filter}"
+    const val BIN = "bin"
 
     /** [bucketId] null means "All photos & videos". */
     fun swipe(bucketId: Long?, filter: MediaFilter) = "swipe?bucket=${bucketId ?: ALL_BUCKETS}&filter=${filter.name}"
@@ -80,6 +82,7 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor) {
                 HomeRoute(
                     onOpenBucket = { bucket, filter -> nav.navigate(Routes.swipe(bucket, filter)) },
                     onChangeAccess = requestAccess,
+                    onOpenBin = { nav.navigate(Routes.BIN) },
                 )
             }
         }
@@ -90,7 +93,10 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor) {
                 navArgument("filter") { type = NavType.StringType; defaultValue = MediaFilter.BOTH.name },
             ),
         ) {
-            SwipePlaceholderScreen(onBack = { nav.popBackStack() })
+            SwipeRoute(onBack = { nav.popBackStack() }, onOpenBin = { nav.navigate(Routes.BIN) })
+        }
+        composable(Routes.BIN) {
+            BinRoute(onBack = { nav.popBackStack() })
         }
     }
 }
