@@ -4,6 +4,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -34,13 +35,14 @@ class OnboardingTest {
     fun grantingAccessFromOnboardingOpensFolderList() {
         compose.onNodeWithText("Nothing is deleted without your OK").assertExists()
         takeScreenshot("onboarding")
-        compose.onNodeWithText("Allow access").performClick()
+        compose.onNodeWithText("Allow access").performScrollTo().performClick()
 
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         // "Allow" on API 30–33, "Allow all" on 34+; match the button by id or text.
         val allow = device.wait(
             Until.findObject(
-                By.res(Pattern.compile("com\\.android\\.permissioncontroller:id/permission_allow(_all)?_button")),
+                // AOSP images use com.android.permissioncontroller, Google images com.google.android.*.
+                By.res(Pattern.compile("com\\.(google\\.)?android\\.permissioncontroller:id/permission_allow(_all)?_button")),
             ),
             10_000,
         ) ?: device.wait(Until.findObject(By.text(Pattern.compile("(?i)allow( all)?"))), 5_000)

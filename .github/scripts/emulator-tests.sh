@@ -16,12 +16,14 @@ adb shell settings put global package_verifier_enable 0 || true
 
 echo "::group::Seed media"
 adb shell mkdir -p /sdcard/DCIM/SeedCamera /sdcard/Pictures/SeedScreens /sdcard/Download
-adb push seed/SeedCamera/. /sdcard/DCIM/SeedCamera/
-adb push seed/SeedScreens/. /sdcard/Pictures/SeedScreens/
-adb push seed/Download/. /sdcard/Download/
+# One file at a time: pushing "dir/." makes adb create "dir/./file", which FUSE rejects.
+push_dir() { for f in "$1"/*; do adb push "$f" "$2/" > /dev/null || echo "push failed: $f"; done; }
+push_dir seed/SeedCamera /sdcard/DCIM/SeedCamera
+push_dir seed/SeedScreens /sdcard/Pictures/SeedScreens
+push_dir seed/Download /sdcard/Download
 adb shell content call --uri content://media --method scan_volume --arg external_primary || true
 sleep 5
-adb shell content query --uri content://media/external/images/media --projection _display_name:bucket_display_name | head -30 || true
+adb shell content query --uri content://media/external/file --projection _display_name:bucket_display_name --where "media_type!=0" || true
 echo "::endgroup::"
 
 adb install -r -g app/build/outputs/apk/debug/app-debug.apk
