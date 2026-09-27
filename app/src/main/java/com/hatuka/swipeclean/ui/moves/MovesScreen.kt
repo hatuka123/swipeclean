@@ -85,6 +85,7 @@ fun MovesRoute(onBack: () -> Unit, viewModel: MovesViewModel = hiltViewModel()) 
                 is MovesEvent.Moved -> buildString {
                     append(resources.getString(R.string.moves_result_moved, nf.format(event.count)))
                     if (event.failed > 0) append('\n').append(resources.getString(R.string.moves_result_failed, nf.format(event.failed)))
+                    if (event.originalsKept > 0) append('\n').append(resources.getString(R.string.moves_result_originals_kept, nf.format(event.originalsKept)))
                 }
                 is MovesEvent.Failed -> resources.getString(R.string.moves_result_failed, nf.format(event.count))
                 MovesEvent.Cancelled -> resources.getString(R.string.moves_result_cancelled)

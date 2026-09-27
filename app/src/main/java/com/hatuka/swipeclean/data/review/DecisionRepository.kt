@@ -1,6 +1,7 @@
 package com.hatuka.swipeclean.data.review
 
 import androidx.room.withTransaction
+import com.hatuka.swipeclean.core.move.TargetPathRules
 import com.hatuka.swipeclean.core.review.DecisionState
 import com.hatuka.swipeclean.core.review.SwipeRecord
 import com.hatuka.swipeclean.data.db.AppDatabase
@@ -78,6 +79,25 @@ class DecisionRepository @Inject constructor(
     suspend fun markMoved(ids: List<Long>) {
         if (ids.isEmpty()) return
         ids.chunked(SQL_CHUNK).forEach { decisions.setStateKeepingTarget(it, DecisionState.MOVED, clock.millis()) }
+    }
+
+    /**
+     * A move that had to be done as copy + trash (see MediaModifier.moveTo): the original is
+     * marked moved, and the copy (a new MediaStore ID) is recorded as moved too, so neither
+     * shows up in a swipe session again.
+     */
+    suspend fun recordCopy(original: DecisionEntity, newId: Long) = db.withTransaction {
+        val target = original.targetPath
+        decisions.setStateKeepingTarget(listOf(original.mediaId), DecisionState.MOVED, clock.millis())
+        decisions.upsert(
+            original.copy(
+                mediaId = newId,
+                bucketName = target?.let(TargetPathRules::displayName),
+                relativePath = target,
+                state = DecisionState.MOVED,
+                decidedAt = clock.millis(),
+            ),
+        )
     }
 
     /** Kept and moved items, for the "Reviewed" screen where decisions can be changed. */

@@ -23,6 +23,11 @@ push_dir() { for f in "$1"/*; do adb push "$f" "$2/" > /dev/null || echo "push f
 push_dir seed/SeedCamera /sdcard/DCIM/SeedCamera
 push_dir seed/SeedScreens /sdcard/Pictures/SeedScreens
 push_dir seed/Download /sdcard/Download
+# WhatsApp keeps its media under Android/media on Android 11+; other apps cannot move files
+# out of there in place (the app falls back to copy + trash).
+wa="/sdcard/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images"
+adb shell mkdir -p "\"$wa\"" || true
+for f in seed/WhatsApp/*; do adb push "$f" "$wa/" > /dev/null || echo "push failed: $f"; done
 adb shell content call --uri content://media --method scan_volume --arg external_primary || true
 sleep 5
 adb shell content query --uri content://media/external/file --projection _display_name:bucket_display_name --where "media_type!=0" || true
@@ -60,6 +65,7 @@ run "full-access" FolderListTest
 run "video" VideoPlaybackTest
 run "swipe-flow" SwipeFlowTest
 run "move-flow" MoveFlowTest
+run "whatsapp-move" WhatsAppMoveTest
 
 # 3) Android 14+: only "selected photos" access.
 if [ "$api" -ge 34 ]; then

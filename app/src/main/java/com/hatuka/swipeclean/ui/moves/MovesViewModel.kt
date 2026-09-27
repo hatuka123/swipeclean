@@ -9,6 +9,7 @@ import com.hatuka.swipeclean.data.db.DecisionEntity
 import com.hatuka.swipeclean.data.media.IoDispatcher
 import com.hatuka.swipeclean.data.media.MediaModifier
 import com.hatuka.swipeclean.data.media.MediaRepository
+import com.hatuka.swipeclean.data.media.MoveResult
 import com.hatuka.swipeclean.data.review.DecisionActions
 import com.hatuka.swipeclean.data.review.DecisionRepository
 import com.hatuka.swipeclean.data.settings.SettingsRepository
@@ -35,7 +36,8 @@ data class MovesUiState(
 )
 
 sealed interface MovesEvent {
-    data class Moved(val count: Int, val failed: Int) : MovesEvent
+    /** [originalsKept]: copied, but the original could not be moved to the system trash. */
+    data class Moved(val count: Int, val failed: Int, val originalsKept: Int = 0) : MovesEvent
     data class Failed(val count: Int) : MovesEvent
     data object Cancelled : MovesEvent
 }
@@ -71,6 +73,7 @@ class MovesViewModel @Inject constructor(
     private var inFlight: List<DecisionEntity> = emptyList()
     private var moved = 0
     private var failed = 0
+    private var originalsKept = 0
 
     init {
         viewModelScope.launch {
@@ -97,6 +100,7 @@ class MovesViewModel @Inject constructor(
             queue.addAll(DeletionReconciler.chunks(items))
             moved = 0
             failed = 0
+            originalsKept = 0
             next()
         }
     }
@@ -114,11 +118,16 @@ class MovesViewModel @Inject constructor(
                 finish(cancelled = true)
                 return@launch
             }
-            val results = withContext(io) { chunk.map { it to modifier.moveTo(uriOf(it), it.targetPath!!) } }
-            val ok = results.filter { it.second }.map { it.first.mediaId }
-            decisions.markMoved(ok)
-            moved += ok.size
-            failed += results.size - ok.size
+            val results = withContext(io) { chunk.map { it to modifier.moveTo(uriOf(it), it.toRow().type, it.targetPath!!) } }
+            decisions.markMoved(results.filter { it.second is MoveResult.Moved }.map { it.first.mediaId })
+            results.forEach { (item, result) ->
+                if (result is MoveResult.Copied) {
+                    decisions.recordCopy(item, result.newId)
+                    if (!result.originalTrashed) originalsKept++
+                }
+            }
+            moved += results.count { it.second !is MoveResult.Failed }
+            failed += results.count { it.second is MoveResult.Failed }
             next()
         }
     }
@@ -146,7 +155,7 @@ class MovesViewModel @Inject constructor(
         busy.value = false
         _events.send(
             when {
-                moved > 0 -> MovesEvent.Moved(moved, failed)
+                moved > 0 -> MovesEvent.Moved(moved, failed, originalsKept)
                 cancelled -> MovesEvent.Cancelled
                 else -> MovesEvent.Failed(failed)
             },

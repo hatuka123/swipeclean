@@ -99,6 +99,7 @@
     <string name="moves_empty_body">פריטים שהחלקת למעלה מחכים כאן, ואז מועברים יחד באישור אחד.</string>
     <string name="moves_result_moved">הועברו %1$s פריטים</string>
     <string name="moves_result_failed">לא ניתן היה להעביר %1$s פריטים, והם עדיין מחכים</string>
+    <string name="moves_result_originals_kept">%1$s פריטים הועתקו, אבל לא ניתן היה להעביר את המקור שלהם לסל המחזור</string>
     <string name="moves_result_cancelled">בוטל – שום דבר לא הועבר</string>
     <string name="home_moves_banner">%1$s פריטים מחכים להעברה</string>
     <string name="home_reset_hint">לחיצה ארוכה על תיקייה מאפשרת לסקור אותה שוב</string>

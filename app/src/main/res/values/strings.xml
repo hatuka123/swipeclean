@@ -97,6 +97,7 @@
     <string name="moves_empty_body">Items you swipe up are queued here, then moved together with one confirmation.</string>
     <string name="moves_result_moved">Moved %1$s items</string>
     <string name="moves_result_failed">%1$s items could not be moved and are still waiting</string>
+    <string name="moves_result_originals_kept">%1$s items were copied, but their originals could not be moved to the trash</string>
     <string name="moves_result_cancelled">Cancelled – nothing was moved</string>
     <string name="home_moves_banner">%1$s items are waiting to be moved</string>
     <string name="home_reset_hint">Long-press a folder to review it again</string>
