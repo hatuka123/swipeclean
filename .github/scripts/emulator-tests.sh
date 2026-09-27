@@ -13,6 +13,9 @@ failed=0
 
 adb wait-for-device
 adb shell settings put global package_verifier_enable 0 || true
+# A slow CI emulator often shows "System UI isn't responding" during boot; the dialog stays on top
+# and swallows the tests' touches and key presses. App crashes are still caught by `am instrument`.
+adb shell settings put global hide_error_dialogs 1 || true
 
 echo "::group::Seed media"
 # boot_completed fires before shared storage is mounted on newer images; wait for it.
