@@ -1,6 +1,7 @@
 package com.hatuka.swipeclean.ui.bin
 
 import android.content.IntentSender
+import android.util.Log
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -74,6 +75,10 @@ class BinViewModel @Inject constructor(
 
     private val _events = Channel<BinEvent>(Channel.BUFFERED)
     val events: Flow<BinEvent> = _events.receiveAsFlow()
+
+    private companion object {
+        const val TAG = "BinViewModel"
+    }
 
     private val queue = ArrayDeque<List<DecisionEntity>>()
     private var inFlight: List<DecisionEntity> = emptyList()
@@ -171,7 +176,7 @@ class BinViewModel @Inject constructor(
         val uris = chunk.map { uriOf(it) }
         val sender = runCatching {
             if (settings.deleteMode.first() == DeleteMode.PERMANENT) modifier.deleteRequest(uris) else modifier.trashRequest(uris)
-        }.getOrNull()
+        }.onFailure { Log.w(TAG, "Could not create the system delete request", it) }.getOrNull()
         if (sender == null) {
             failedCount += chunk.size
             inFlight = emptyList()

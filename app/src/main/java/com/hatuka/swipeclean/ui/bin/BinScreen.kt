@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -84,6 +85,7 @@ fun BinRoute(onBack: () -> Unit, viewModel: BinViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val request by viewModel.request.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val resources = LocalResources.current
     val snackbar = remember { SnackbarHostState() }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
@@ -97,7 +99,7 @@ fun BinRoute(onBack: () -> Unit, viewModel: BinViewModel = hiltViewModel()) {
     }
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
-            val res = context.resources
+            val res = resources
             val nf = NumberFormat.getIntegerInstance()
             val text = when (event) {
                 is BinEvent.Deleted -> buildString {

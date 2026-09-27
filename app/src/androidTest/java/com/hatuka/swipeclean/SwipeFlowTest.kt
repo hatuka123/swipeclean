@@ -10,7 +10,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -76,6 +78,7 @@ class SwipeFlowTest {
             down(center)
             moveBy(Offset(width * 0.22f, 0f))
         }
+        Thread.sleep(500)
         takeScreenshot("swipe_dragging")
         compose.onNodeWithTag(SWIPE_CARD_TAG).performTouchInput { up() }
         waitForText("5 left")
@@ -140,6 +143,8 @@ class SwipeFlowTest {
             device.findObject(byText)?.let { return it }
         }
         takeScreenshot("no_trash_dialog")
-        error("System trash confirmation did not appear")
+        val screen = runCatching { compose.onRoot(useUnmergedTree = false).printToString() }.getOrDefault("")
+        error("System trash confirmation did not appear. Screen:
+$screen")
     }
 }

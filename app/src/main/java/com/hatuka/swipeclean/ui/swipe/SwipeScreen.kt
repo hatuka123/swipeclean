@@ -211,7 +211,7 @@ fun SwipeContent(
                     }
                 }
             }
-            ActionButtons(
+            if (!state.finished) ActionButtons(
                 enabled = current != null,
                 canUndo = state.canUndo,
                 onDelete = { byButton(SwipeDirection.LEFT) },
