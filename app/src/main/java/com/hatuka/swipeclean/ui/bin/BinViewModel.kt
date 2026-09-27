@@ -16,6 +16,7 @@ import com.hatuka.swipeclean.data.settings.DeleteMode
 import com.hatuka.swipeclean.data.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -78,6 +79,8 @@ class BinViewModel @Inject constructor(
 
     private companion object {
         const val TAG = "BinViewModel"
+        const val RECHECK_ATTEMPTS = 15
+        const val RECHECK_DELAY_MS = 200L
     }
 
     private val queue = ArrayDeque<List<DecisionEntity>>()
@@ -156,7 +159,16 @@ class BinViewModel @Inject constructor(
                 return@launch
             }
             val ids = chunk.map { it.mediaId }
-            val outcome = DeletionReconciler.reconcile(ids, media.visibleIds(ids), confirmed = true)
+            // MediaProvider applies the change right after returning RESULT_OK, so items can still
+            // be visible for a moment; re-check briefly before calling anything a failure.
+            var visible = media.visibleIds(ids)
+            var attempts = 0
+            while (visible.isNotEmpty() && attempts < RECHECK_ATTEMPTS) {
+                delay(RECHECK_DELAY_MS)
+                visible = media.visibleIds(visible)
+                attempts++
+            }
+            val outcome = DeletionReconciler.reconcile(ids, visible, confirmed = true)
             val deleted = chunk.filter { it.mediaId in outcome.deleted.toHashSet() }
             decisions.markDeleted(deleted)
             deletedCount += deleted.size
