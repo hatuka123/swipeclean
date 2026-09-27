@@ -144,7 +144,6 @@ class SwipeFlowTest {
         }
         takeScreenshot("no_trash_dialog")
         val screen = runCatching { compose.onRoot(useUnmergedTree = false).printToString() }.getOrDefault("")
-        error("System trash confirmation did not appear. Screen:
-$screen")
+        error("System trash confirmation did not appear. Screen: $screen")
     }
 }
