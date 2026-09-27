@@ -52,8 +52,8 @@ class FolderListTest {
         resetHomeFilter(compose)
         waitForText("SeedScreens")
         compose.onNodeWithText("Videos").performClick()
-        compose.waitUntil(10_000) { compose.onAllNodes(hasText("SeedScreens")).fetchSemanticsNodes().isEmpty() }
-        compose.onNodeWithText("SeedCamera").assertExists()
+        // Wait for the reloaded list (a loading state briefly shows no folders at all).
+        compose.waitUntil(20_000) { !hasNodeWithText(compose, "SeedScreens") && hasNodeWithText(compose, "SeedCamera") }
         Thread.sleep(THUMBNAIL_SETTLE_MS)
         takeScreenshot("home_videos")
         resetHomeFilter(compose)

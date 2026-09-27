@@ -50,9 +50,8 @@ class SwipeFlowTest {
 
     private val device get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
-    private fun waitForText(text: String, substring: Boolean = false, timeoutMs: Long = 20_000) = compose.waitUntil(timeoutMs) {
-        compose.onAllNodes(hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty()
-    }
+    private fun waitForText(text: String, substring: Boolean = false, timeoutMs: Long = 20_000) =
+        waitForText(compose, text, substring, timeoutMs)
 
     private fun seedScreensCount(): Int {
         val resolver = InstrumentationRegistry.getInstrumentation().targetContext.contentResolver

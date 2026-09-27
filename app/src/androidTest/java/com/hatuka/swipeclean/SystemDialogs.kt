@@ -55,3 +55,10 @@ fun clickText(compose: ComposeTestRule, text: String, attempts: Int = 5) {
         Thread.sleep(500)
     }
 }
+
+/** True if a node with [text] exists; false (not an error) while no Compose tree is attached. */
+fun hasNodeWithText(compose: ComposeTestRule, text: String, substring: Boolean = false): Boolean =
+    runCatching { compose.onAllNodes(hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
+
+fun waitForText(compose: ComposeTestRule, text: String, substring: Boolean = false, timeoutMs: Long = 20_000) =
+    compose.waitUntil(timeoutMs) { hasNodeWithText(compose, text, substring) }

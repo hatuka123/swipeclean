@@ -41,9 +41,8 @@ class MoveFlowTest {
         .outerRule(GrantPermissionRule.grant(*MediaAccessResolver.permissionsToRequest(Build.VERSION.SDK_INT).toTypedArray()))
         .around(compose)
 
-    private fun waitForText(text: String, substring: Boolean = false, timeoutMs: Long = 20_000) = compose.waitUntil(timeoutMs) {
-        compose.onAllNodes(hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty()
-    }
+    private fun waitForText(text: String, substring: Boolean = false, timeoutMs: Long = 20_000) =
+        waitForText(compose, text, substring, timeoutMs)
 
     /** Where the seeded download_*.jpg files are now, as RELATIVE_PATH → count. */
     private fun downloadSeedLocations(): Map<String, Int> {

@@ -33,9 +33,7 @@ class WhatsAppMoveTest {
         .outerRule(GrantPermissionRule.grant(*MediaAccessResolver.permissionsToRequest(Build.VERSION.SDK_INT).toTypedArray()))
         .around(compose)
 
-    private fun waitForText(text: String, timeoutMs: Long = 20_000) = compose.waitUntil(timeoutMs) {
-        compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
-    }
+    private fun waitForText(text: String, timeoutMs: Long = 20_000) = waitForText(compose, text, timeoutMs = timeoutMs)
 
     /** RELATIVE_PATH → count for the seeded wa_*.jpg files that are visible (not trashed). */
     private fun seedLocations(): Map<String, Int> {
