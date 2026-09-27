@@ -1,0 +1,27 @@
+name: Notify owner
+
+# Sends a text message to the owner's Telegram. Started by hand (or by Claude via
+# `gh workflow run notify.yml -f message="..."`) for progress updates; the bot credentials
+# stay in GitHub Secrets.
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: Message text
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram message
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MESSAGE: ${{ inputs.message }}
+        run: |
+          printf '%s' "$MESSAGE" | python3 -c "import sys; print(sys.stdin.read()[:3900])" > msg.txt
+          curl -sS --fail-with-body \
+            --data-urlencode chat_id="$TELEGRAM_CHAT_ID" \
+            --data-urlencode text@msg.txt \
+            "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage" > /dev/null

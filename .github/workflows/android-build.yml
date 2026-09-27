@@ -4,6 +4,10 @@ name: Android build
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/notify.yml"
+      - ".github/workflows/verify.yml"
   workflow_dispatch:
 
 permissions:
