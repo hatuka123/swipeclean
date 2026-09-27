@@ -46,16 +46,19 @@ jobs:
           echo "$SIGNING_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "SIGNING_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
-      - name: Build release APK
+      - name: Build release APK and bundle
         env:
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
         run: |
           set -o pipefail
-          gradle assembleRelease -PversionCode="$BUILD_NUMBER" --stacktrace 2>&1 | tee build.log
+          gradle assembleRelease bundleRelease -PversionCode="$BUILD_NUMBER" --stacktrace 2>&1 | tee build.log
           APK="app/build/outputs/apk/release/app-release.apk"
-          test -f "$APK"
+          AAB="app/build/outputs/bundle/release/app-release.aab"
+          test -f "$APK" && test -f "$AAB"
           cp "$APK" "SwipeClean-build-$BUILD_NUMBER.apk"
+          # The bundle is what Google Play accepts; it is only attached to the GitHub Release.
+          cp "$AAB" "SwipeClean-build-$BUILD_NUMBER.aab"
 
       - name: Check merged manifest (Play policy)
         run: bash .github/scripts/check-manifest.sh
@@ -73,7 +76,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "build-$BUILD_NUMBER" "SwipeClean-build-$BUILD_NUMBER.apk" \
+          gh release create "build-$BUILD_NUMBER" "SwipeClean-build-$BUILD_NUMBER.apk" "SwipeClean-build-$BUILD_NUMBER.aab" \
             --target "$GITHUB_SHA" \
             --title "Build $BUILD_NUMBER" \
             --notes "$COMMIT_MSG"

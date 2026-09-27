@@ -30,7 +30,7 @@ SwipeClean ("the app") helps you review and clean up the photos and videos on yo
 **Changes**: if this policy changes, the new version will be published at this address with a new
 date.
 
-**Contact**: [CONTACT EMAIL – to be filled in before publishing]
+**Contact**: hatuka.eitan@gmail.com
 
 ## עברית
 
@@ -57,4 +57,4 @@ SwipeClean ("האפליקציה") עוזרת לעבור על התמונות וה
 
 **שינויים**: אם המדיניות תשתנה, הגרסה החדשה תפורסם בכתובת הזו עם תאריך חדש.
 
-**יצירת קשר**: [CONTACT EMAIL – to be filled in before publishing]
+**יצירת קשר**: hatuka.eitan@gmail.com
