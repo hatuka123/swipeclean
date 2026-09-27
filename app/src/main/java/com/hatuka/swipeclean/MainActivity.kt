@@ -28,6 +28,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         // singleTask: a tapped reminder reuses this window (onNewIntent) instead of opening a second copy.
+        intent.stayInThisTask()
         // Keeps the reminder scheduled (e.g. after an app update or a changed plan).
         lifecycleScope.launch { reminderScheduler.reschedule() }
         setContent {
@@ -39,7 +40,17 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        intent.stayInThisTask()
         setIntent(intent)
         newIntents.trySend(intent)
+    }
+
+    /**
+     * Notification taps always carry NEW_TASK. With it, NavController.handleDeepLink finishes this
+     * activity and restarts the whole task (a visible flash, and the open window is lost);
+     * without it the deep link simply navigates inside the current window.
+     */
+    private fun Intent.stayInThisTask() {
+        removeFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
 }
