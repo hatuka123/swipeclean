@@ -57,7 +57,8 @@ class SettingsRepository @Inject constructor(
         it[PLAN_SLOTS] = PlanCodec.encode(plan.slots)
         it[PLAN_QUOTA] = plan.quota.coerceIn(CleanupPlan.MIN_QUOTA, CleanupPlan.MAX_QUOTA)
         it[PLAN_BUCKET] = plan.source.bucketId ?: -1L
-        if (plan.source.bucketName != null) it[PLAN_BUCKET_NAME] = plan.source.bucketName else it.remove(PLAN_BUCKET_NAME)
+        val name = plan.source.bucketName
+        if (name != null) it[PLAN_BUCKET_NAME] = name else it.remove(PLAN_BUCKET_NAME)
         it[PLAN_FILTER] = plan.source.filter.name
     }
 

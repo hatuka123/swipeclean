@@ -66,6 +66,7 @@ run "video" VideoPlaybackTest
 run "swipe-flow" SwipeFlowTest
 run "move-flow" MoveFlowTest
 run "whatsapp-move" WhatsAppMoveTest
+run "reminder" ReminderFlowTest
 
 # 3) Android 14+: only "selected photos" access.
 if [ "$api" -ge 34 ]; then
