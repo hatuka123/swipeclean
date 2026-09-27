@@ -9,6 +9,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import com.hatuka.swipeclean.core.access.MediaAccess
 import org.junit.Before
@@ -38,13 +39,16 @@ class OnboardingTest {
 
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         // "Allow" on API 30–33, "Allow all" on 34+; match the button by id or text.
-        val allow = device.wait(
-            Until.findObject(
-                // AOSP images use com.android.permissioncontroller, Google images com.google.android.*.
-                By.res(Pattern.compile("com\\.(google\\.)?android\\.permissioncontroller:id/permission_allow(_all)?_button")),
-            ),
-            30_000,
-        ) ?: device.wait(Until.findObject(By.text(Pattern.compile("(?i)allow( all)?"))), 10_000)
+        // AOSP images use com.android.permissioncontroller, Google images com.google.android.*.
+        val allowButton = By.res(Pattern.compile("com\\.(google\\.)?android\\.permissioncontroller:id/permission_allow(_all)?_button"))
+        // Slow CI emulators sometimes show "System UI isn't responding" on top; answer "Wait".
+        val anrWait = By.res("android:id/aerr_wait")
+        var allow: UiObject2? = null
+        val deadline = System.currentTimeMillis() + 60_000
+        while (allow == null && System.currentTimeMillis() < deadline) {
+            device.findObject(anrWait)?.click()
+            allow = device.wait(Until.findObject(allowButton), 3_000)
+        }
         if (allow == null) {
             // Leave a window dump next to the screenshots to see what was on screen instead.
             val dir = java.io.File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null), "shots")

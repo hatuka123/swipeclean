@@ -28,6 +28,9 @@ sleep 5
 adb shell content query --uri content://media/external/file --projection _display_name:bucket_display_name --where "media_type!=0" || true
 echo "::endgroup::"
 
+# Let the freshly booted system (System UI, permission controller) settle before UI tests.
+sleep 45
+adb shell input keyevent 82 || true
 adb install -r -g app/build/outputs/apk/debug/app-debug.apk
 adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 
