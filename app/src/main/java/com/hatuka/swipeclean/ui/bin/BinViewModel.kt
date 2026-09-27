@@ -79,7 +79,7 @@ class BinViewModel @Inject constructor(
 
     private companion object {
         const val TAG = "BinViewModel"
-        const val RECHECK_ATTEMPTS = 15
+        const val RECHECK_ATTEMPTS = 30
         const val RECHECK_DELAY_MS = 200L
     }
 

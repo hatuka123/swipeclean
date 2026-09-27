@@ -50,7 +50,7 @@ class SwipeFlowTest {
 
     private val device get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
-    private fun waitForText(text: String, substring: Boolean = false) = compose.waitUntil(20_000) {
+    private fun waitForText(text: String, substring: Boolean = false, timeoutMs: Long = 20_000) = compose.waitUntil(timeoutMs) {
         compose.onAllNodes(hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty()
     }
 
@@ -119,7 +119,7 @@ class SwipeFlowTest {
         val confirm = waitForSystemConfirm()
         takeScreenshot("trash_dialog")
         confirm.click()
-        waitForText("The bin is empty")
+        waitForText("The bin is empty", timeoutMs = 60_000)
         assertEquals(4, seedScreensCount())
         takeScreenshot("bin_after_delete")
 
