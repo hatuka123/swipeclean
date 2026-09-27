@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        // singleTask: a tapped reminder reuses this window (onNewIntent) instead of opening a second copy.
         // Keeps the reminder scheduled (e.g. after an app update or a changed plan).
         lifecycleScope.launch { reminderScheduler.reschedule() }
         setContent {

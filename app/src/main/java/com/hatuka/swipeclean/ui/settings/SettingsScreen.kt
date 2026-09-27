@@ -315,8 +315,8 @@ private fun QuotaSlider(quota: Int, onQuota: (Int) -> Unit) {
             value = value,
             onValueChange = { value = it },
             onValueChangeFinished = { onQuota(shown) },
+            // Continuous track, rounded to tens (48 tick marks would clutter the slider).
             valueRange = CleanupPlan.MIN_QUOTA.toFloat()..CleanupPlan.MAX_QUOTA.toFloat(),
-            steps = (CleanupPlan.MAX_QUOTA - CleanupPlan.MIN_QUOTA) / 10 - 1,
         )
     }
 }

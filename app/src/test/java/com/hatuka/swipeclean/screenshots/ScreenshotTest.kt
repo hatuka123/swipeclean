@@ -22,6 +22,19 @@ import com.hatuka.swipeclean.data.settings.DeleteMode
 import com.hatuka.swipeclean.ui.bin.BinContent
 import com.hatuka.swipeclean.ui.bin.BinUiState
 import com.hatuka.swipeclean.ui.bin.DecisionEditorCallbacks
+import com.hatuka.swipeclean.core.plan.CleanupPlan
+import com.hatuka.swipeclean.core.plan.DayStats
+import com.hatuka.swipeclean.core.plan.PlanSlot
+import com.hatuka.swipeclean.core.plan.PlanSource
+import com.hatuka.swipeclean.core.plan.ProgressCalculator
+import com.hatuka.swipeclean.ui.settings.SettingsContent
+import com.hatuka.swipeclean.ui.settings.SourceOption
+import com.hatuka.swipeclean.ui.stats.StatsContent
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import com.hatuka.swipeclean.ui.moves.MovesContent
 import com.hatuka.swipeclean.ui.moves.MovesUiState
 import com.hatuka.swipeclean.ui.reviewed.ReviewedContent
@@ -228,6 +241,70 @@ class ScreenshotTest(private val variant: String, private val qualifiers: String
             {},
             {},
             editor,
+        )
+    }
+
+    private val samplePlan = CleanupPlan(
+        enabled = true,
+        slots = listOf(
+            PlanSlot(setOf(DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY), LocalTime.of(20, 30)),
+            PlanSlot(setOf(DayOfWeek.FRIDAY, DayOfWeek.SATURDAY), LocalTime.of(10, 0)),
+        ),
+        quota = 50,
+        source = PlanSource(1, "Camera"),
+    )
+
+    private val sampleProgress = ProgressCalculator.progress(
+        stats = (0L..13L).map { back ->
+            DayStats(LocalDate.of(2026, 9, 27).minusDays(back).toEpochDay(), reviewed = listOf(55, 20, 60, 70, 0, 52, 50, 10, 80, 50, 51, 0, 65, 30)[back.toInt()], deleted = 7, bytesFreed = 42_000_000)
+        },
+        plannedDays = DayOfWeek.entries.toSet(),
+        quota = 50,
+        today = LocalDate.of(2026, 9, 27),
+    )
+
+    @Test
+    fun settings() = shoot("settings") {
+        SettingsContent(
+            plan = samplePlan,
+            next = ZonedDateTime.of(2026, 9, 27, 20, 30, 0, 0, ZoneOffset.UTC),
+            canNotify = true,
+            sources = listOf(SourceOption(null, null), SourceOption(1, "Camera")),
+            deleteMode = DeleteMode.TRASH,
+            defaultTarget = "Pictures/Found/",
+            snackbar = SnackbarHostState(),
+            onBack = {},
+            onEnabled = {},
+            onAllowNotifications = {},
+            onSlot = { _, _ -> },
+            onAddSlot = {},
+            onRemoveSlot = {},
+            onQuota = {},
+            onSource = {},
+            onSourceFilter = {},
+            onTestReminder = {},
+            onDeleteMode = {},
+            onResetDefaultFolder = {},
+        )
+    }
+
+    @Test
+    fun stats() = shoot("stats") {
+        StatsContent(sampleProgress, samplePlan, {}, {})
+    }
+
+    @Test
+    fun homeWithPlan() = shoot("home_plan") {
+        HomeContent(
+            state = HomeUiState(MediaAccess.FULL, MediaFilter.BOTH, buckets, loading = false),
+            binCount = 3,
+            onOpenBin = {},
+            coverUri = { _, _ -> null },
+            onFilter = {},
+            onOpenBucket = {},
+            onChangeAccess = {},
+            progress = sampleProgress,
+            planEnabled = true,
         )
     }
 }
