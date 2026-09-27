@@ -18,7 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Sort
-import androidx.compose.material.icons.filled.DriveFileMove
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
@@ -317,7 +317,7 @@ private fun MovesBanner(count: Int, onOpenMoves: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Icon(Icons.Filled.DriveFileMove, contentDescription = null)
+            Icon(Icons.AutoMirrored.Filled.DriveFileMove, contentDescription = null)
             Text(
                 stringResource(R.string.home_moves_banner, NumberFormat.getIntegerInstance().format(count)),
                 style = MaterialTheme.typography.bodyLarge,

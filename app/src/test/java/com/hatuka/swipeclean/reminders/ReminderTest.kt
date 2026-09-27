@@ -13,6 +13,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.hatuka.swipeclean.core.plan.CleanupPlan
 import com.hatuka.swipeclean.core.plan.PlanSlot
@@ -21,11 +22,11 @@ import com.hatuka.swipeclean.data.review.ProgressRepository
 import com.hatuka.swipeclean.data.settings.SettingsRepository
 import com.hatuka.swipeclean.testing.inMemoryDb
 import com.hatuka.swipeclean.testing.testSettings
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -54,6 +55,7 @@ class ReminderTest {
     private lateinit var scheduler: ReminderScheduler
     private lateinit var notifier: ReminderNotifier
     private lateinit var previousZone: TimeZone
+    private lateinit var factory: WorkerFactory
 
     @Before
     fun setUp() {
@@ -64,7 +66,7 @@ class ReminderTest {
         val progress = ProgressRepository(db, settings, clock)
         notifier = ReminderNotifier(app, settings, progress)
         scheduler = ReminderScheduler({ WorkManager.getInstance(app) }, settings, clock)
-        val factory = object : WorkerFactory() {
+        factory = object : WorkerFactory() {
             override fun createWorker(appContext: Context, workerClassName: String, workerParameters: WorkerParameters): ListenableWorker =
                 ReminderWorker(appContext, workerParameters, notifier, scheduler)
         }
@@ -108,11 +110,10 @@ class ReminderTest {
     }
 
     @Test
-    fun `the reminder shows a notification and schedules the next day`() = runTest {
+    fun `the reminder shows a notification and schedules the next one`() = runBlocking {
         enablePlan(quota = 40)
-        scheduler.reschedule()
-        val first = work()!!
-        WorkManagerTestInitHelper.getTestDriver(app)!!.setInitialDelayMet(first.id)
+        val worker = TestListenableWorkerBuilder<ReminderWorker>(app).setWorkerFactory(factory).build()
+        assertEquals(ListenableWorker.Result.success(), worker.doWork())
 
         val manager = app.getSystemService(NotificationManager::class.java)
         val posted = shadowOf(manager).allNotifications
@@ -120,9 +121,7 @@ class ReminderTest {
         val text = posted.single().extras.getCharSequence("android.text").toString()
         assertTrue(text, text.contains("40"))
         // The worker scheduled the following reminder.
-        val next = work()
-        assertNotNull(next)
-        assertTrue(next!!.id != first.id)
+        assertEquals(WorkInfo.State.ENQUEUED, work()?.state)
     }
 
     @Test
