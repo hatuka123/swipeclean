@@ -40,8 +40,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        // No setIntent(): the deep link goes to the NavController through [newIntents], and
+        // ActivityScenario in the instrumented tests tracks the activity by its original intent.
         intent.stayInThisTask()
-        setIntent(intent)
         newIntents.trySend(intent)
     }
 

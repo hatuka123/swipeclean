@@ -62,8 +62,15 @@ class ReminderFlowTest {
         waitForText(compose, "Test reminder sent")
 
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-        device.openNotification()
-        val notification = device.wait(Until.findObject(By.text("Time to clean!")), 15_000)
+        // The shade can open while the heads-up is still animating and miss the new entry; retry.
+        val notification = (1..3).firstNotNullOfOrNull {
+            device.openNotification()
+            device.wait(Until.findObject(By.text("Time to clean!")), 8_000) ?: run {
+                device.pressBack()
+                device.waitForIdle()
+                null
+            }
+        }
         checkNotNull(notification) { "Reminder notification not found in the shade" }
         takeScreenshot("notification")
         notification.click()
