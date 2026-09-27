@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
+import com.hatuka.swipeclean.ads.AdGate
 import com.hatuka.swipeclean.permissions.MediaAccessMonitor
 import com.hatuka.swipeclean.reminders.ReminderScheduler
 import com.hatuka.swipeclean.ui.nav.AppNavHost
@@ -22,6 +23,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var accessMonitor: MediaAccessMonitor
     @Inject lateinit var reminderScheduler: ReminderScheduler
+    @Inject lateinit var adGate: AdGate
 
     private val reminderLinks = Channel<Uri>(Channel.CONFLATED)
 
@@ -35,7 +37,11 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch { reminderScheduler.reschedule() }
         setContent {
             SwipeCleanTheme {
-                AppNavHost(accessMonitor, reminderLinks.receiveAsFlow())
+                AppNavHost(
+                    accessMonitor,
+                    reminderLinks.receiveAsFlow(),
+                    onSwipeSessionEnd = { lifecycleScope.launch { adGate.onNaturalBreak(this@MainActivity) } },
+                )
             }
         }
     }

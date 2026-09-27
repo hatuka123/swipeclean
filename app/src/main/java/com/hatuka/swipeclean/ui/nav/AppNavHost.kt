@@ -7,15 +7,18 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -67,7 +70,11 @@ object Routes {
 }
 
 @Composable
-fun AppNavHost(accessMonitor: MediaAccessMonitor, reminderLinks: Flow<Uri> = emptyFlow()) {
+fun AppNavHost(
+    accessMonitor: MediaAccessMonitor,
+    reminderLinks: Flow<Uri> = emptyFlow(),
+    onSwipeSessionEnd: () -> Unit = {},
+) {
     val access by accessMonitor.access.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var denied by rememberSaveable { mutableStateOf(false) }
@@ -145,6 +152,19 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor, reminderLinks: Flow<Uri> = emp
         composable(Routes.STATS) {
             StatsRoute(onBack = { nav.popBackStack() }, onOpenSettings = { nav.navigate(Routes.SETTINGS) })
         }
+    }
+
+    // Back from the swipe screen to Home (arrow, system Back or "back to folders") is the natural
+    // break where an ad may be shown later.
+    val sessionEnd by rememberUpdatedState(onSwipeSessionEnd)
+    DisposableEffect(nav) {
+        var previous: String? = null
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+            if (previous == Routes.SWIPE && destination.route == Routes.HOME) sessionEnd()
+            previous = destination.route
+        }
+        nav.addOnDestinationChangedListener(listener)
+        onDispose { nav.removeOnDestinationChangedListener(listener) }
     }
 
     // A tapped reminder opens the swipe screen on top of Home, like tapping a folder, so Back returns

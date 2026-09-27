@@ -52,6 +52,11 @@ class SettingsRepository @Inject constructor(
         )
     }
 
+    /** All-time reviewed count when the last ad was shown (see AdPolicy). */
+    val adReviewedMark: Flow<Int> = store.data.map { it[AD_REVIEWED_MARK] ?: 0 }
+
+    suspend fun setAdReviewedMark(totalReviewed: Int) = store.edit { it[AD_REVIEWED_MARK] = totalReviewed }
+
     suspend fun setPlan(plan: CleanupPlan) = store.edit {
         it[PLAN_ENABLED] = plan.enabled
         it[PLAN_SLOTS] = PlanCodec.encode(plan.slots)
@@ -87,5 +92,6 @@ class SettingsRepository @Inject constructor(
         val PLAN_BUCKET = longPreferencesKey("plan_bucket")
         val PLAN_BUCKET_NAME = stringPreferencesKey("plan_bucket_name")
         val PLAN_FILTER = stringPreferencesKey("plan_filter")
+        val AD_REVIEWED_MARK = intPreferencesKey("ad_reviewed_mark")
     }
 }
