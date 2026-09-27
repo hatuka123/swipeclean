@@ -31,7 +31,7 @@ jobs:
           gradle-version: ${{ env.GRADLE_VERSION }}
 
       - name: Build, lint and unit tests
-        run: gradle assembleDebug assembleRelease lint testDebugUnitTest :core:test --stacktrace
+        run: gradle assembleDebug assembleDebugAndroidTest assembleRelease lint testDebugUnitTest :core:test --stacktrace
 
       - name: Check merged manifest (Play policy)
         run: bash .github/scripts/check-manifest.sh

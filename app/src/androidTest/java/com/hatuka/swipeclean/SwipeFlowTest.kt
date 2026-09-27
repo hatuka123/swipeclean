@@ -78,7 +78,7 @@ class SwipeFlowTest {
             down(center)
             moveBy(Offset(width * 0.22f, 0f))
         }
-        Thread.sleep(500)
+        compose.waitForIdle()
         takeScreenshot("swipe_dragging")
         compose.onNodeWithTag(SWIPE_CARD_TAG).performTouchInput { up() }
         waitForText("5 left")
@@ -138,6 +138,9 @@ class SwipeFlowTest {
         val anrWait = By.res("android:id/aerr_wait")
         val deadline = System.currentTimeMillis() + 30_000
         while (System.currentTimeMillis() < deadline) {
+            // The Compose test clock only advances when the test syncs with Compose; without this
+            // the effect that launches the system request would not run while we wait here.
+            compose.waitForIdle()
             device.findObject(anrWait)?.click()
             device.wait(Until.findObject(positive), 2_000)?.let { return it }
             device.findObject(byText)?.let { return it }
