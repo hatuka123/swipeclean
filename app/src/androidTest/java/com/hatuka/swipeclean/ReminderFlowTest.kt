@@ -80,7 +80,13 @@ class ReminderFlowTest {
         }
         waitForText(compose, "Today:", substring = true)
         takeScreenshot("swipe_from_reminder")
-        // The shade is still collapsing after the tap; touches are rejected until our window has focus.
+        // On emulators the shade can stay expanded over the app after the tap; touches into the app are
+        // rejected while System UI is on top, so close it before going on.
+        repeat(5) {
+            if (device.currentPackageName != "com.android.systemui") return@repeat
+            device.pressBack()
+            device.waitForIdle()
+        }
         compose.waitUntil(10_000) { compose.runOnUiThread<Boolean> { compose.activity.hasWindowFocus() } }
 
         // Leave the plan off for other tests.
