@@ -15,6 +15,8 @@ adb wait-for-device
 adb shell settings put global package_verifier_enable 0 || true
 
 echo "::group::Seed media"
+# boot_completed fires before shared storage is mounted on newer images; wait for it.
+for i in $(seq 1 60); do adb shell ls /sdcard/Download > /dev/null 2>&1 && break; sleep 3; done
 adb shell mkdir -p /sdcard/DCIM/SeedCamera /sdcard/Pictures/SeedScreens /sdcard/Download
 # One file at a time: pushing "dir/." makes adb create "dir/./file", which FUSE rejects.
 push_dir() { for f in "$1"/*; do adb push "$f" "$2/" > /dev/null || echo "push failed: $f"; done; }

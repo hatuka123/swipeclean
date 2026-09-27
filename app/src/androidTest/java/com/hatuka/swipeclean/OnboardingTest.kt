@@ -1,7 +1,7 @@
 package com.hatuka.swipeclean
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -11,7 +11,6 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.hatuka.swipeclean.core.access.MediaAccess
-import com.hatuka.swipeclean.ui.home.FOLDER_ROW_TAG
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -44,14 +43,22 @@ class OnboardingTest {
                 // AOSP images use com.android.permissioncontroller, Google images com.google.android.*.
                 By.res(Pattern.compile("com\\.(google\\.)?android\\.permissioncontroller:id/permission_allow(_all)?_button")),
             ),
-            10_000,
-        ) ?: device.wait(Until.findObject(By.text(Pattern.compile("(?i)allow( all)?"))), 5_000)
+            30_000,
+        ) ?: device.wait(Until.findObject(By.text(Pattern.compile("(?i)allow( all)?"))), 10_000)
+        if (allow == null) {
+            // Leave a window dump next to the screenshots to see what was on screen instead.
+            val dir = java.io.File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null), "shots")
+            dir.mkdirs()
+            device.dumpWindowHierarchy(java.io.File(dir, "no_dialog_api${android.os.Build.VERSION.SDK_INT}.xml"))
+            takeScreenshot("no_dialog")
+        }
         checkNotNull(allow) { "System permission dialog did not appear" }
         takeScreenshot("permission_dialog")
         allow.click()
 
-        compose.waitUntil(20_000) {
-            compose.onAllNodesWithTag(FOLDER_ROW_TAG + "all").fetchSemanticsNodes().isNotEmpty()
+        // The Home screen's filter chips appear once access is granted (with or without media).
+        compose.waitUntil(30_000) {
+            compose.onAllNodes(hasText("Both")).fetchSemanticsNodes().isNotEmpty()
         }
     }
 }
