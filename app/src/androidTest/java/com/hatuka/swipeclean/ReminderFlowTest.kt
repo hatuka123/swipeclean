@@ -80,6 +80,8 @@ class ReminderFlowTest {
         }
         waitForText(compose, "Today:", substring = true)
         takeScreenshot("swipe_from_reminder")
+        // The shade is still collapsing after the tap; touches are rejected until our window has focus.
+        compose.waitUntil(10_000) { compose.runOnUiThread<Boolean> { compose.activity.hasWindowFocus() } }
 
         // Leave the plan off for other tests.
         compose.onNodeWithContentDescription("Back").performClick()
