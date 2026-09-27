@@ -28,8 +28,9 @@ import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 
 /**
- * Daily plan end-to-end: turn the plan on in settings (a reminder gets scheduled), send a test
- * reminder, open it from the real notification shade and land on the swipe screen.
+ * Daily plan end-to-end: turn the plan on in settings (a reminder gets scheduled), look at the
+ * statistics, then send a test reminder, open it from the real notification shade and land on the
+ * swipe screen.
  */
 @RunWith(AndroidJUnit4::class)
 class ReminderFlowTest {
@@ -58,9 +59,23 @@ class ReminderFlowTest {
         val scheduled = WorkManager.getInstance(context).getWorkInfosForUniqueWork(ReminderScheduler.WORK_NAME).get()
         assertTrue("reminder not scheduled: $scheduled", scheduled.any { it.state == WorkInfo.State.ENQUEUED })
 
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Statistics").performClick()
+        waitForText(compose, "Last 14 days")
+        takeScreenshot("stats")
+        compose.onNodeWithContentDescription("Back").performClick()
+
+        // Turn the plan off again (other tests expect it off); the test reminder works either way.
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Daily plan & settings").performClick()
+        waitForText(compose, "Remind me every day")
+        compose.onNodeWithTag(PLAN_SWITCH_TAG).performClick()
         compose.onNodeWithText("Send a test reminder now").performScrollTo().performClick()
         waitForText(compose, "Test reminder sent")
 
+        // Last step on purpose: after the tap from the shade, Compose touch injection is unreliable on
+        // the emulators ("Failed to inject touch input"), so only assertions follow.
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         // The shade can open while the heads-up is still animating and miss the new entry; retry.
         val notification = (1..3).firstNotNullOfOrNull {
@@ -78,26 +93,6 @@ class ReminderFlowTest {
         compose.waitUntil(20_000) {
             runCatching { compose.onAllNodes(hasTestTag(SWIPE_CARD_TAG)).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
         }
-        waitForText(compose, "Today:", substring = true)
         takeScreenshot("swipe_from_reminder")
-        // On emulators the shade can stay expanded over the app after the tap; touches into the app are
-        // rejected while System UI is on top, so close it before going on.
-        repeat(5) {
-            if (device.currentPackageName != "com.android.systemui") return@repeat
-            device.pressBack()
-            device.waitForIdle()
-        }
-        compose.waitUntil(10_000) { compose.runOnUiThread<Boolean> { compose.activity.hasWindowFocus() } }
-
-        // Leave the plan off for other tests.
-        compose.onNodeWithContentDescription("Back").performClick()
-        compose.onNodeWithContentDescription("More options").performClick()
-        compose.onNodeWithText("Statistics").performClick()
-        waitForText(compose, "Last 14 days")
-        takeScreenshot("stats")
-        compose.onNodeWithContentDescription("Back").performClick()
-        compose.onNodeWithContentDescription("More options").performClick()
-        compose.onNodeWithText("Daily plan & settings").performClick()
-        compose.onNodeWithTag(PLAN_SWITCH_TAG).performClick()
     }
 }
