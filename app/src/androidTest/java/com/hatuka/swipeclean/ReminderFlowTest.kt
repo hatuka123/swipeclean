@@ -97,8 +97,16 @@ class ReminderFlowTest {
         takeScreenshot("swipe_from_reminder")
 
         // Back from a reminder returns to Home (a key press: Compose touch input is what fails here).
+        // The CI emulators sometimes show "System UI isn't responding" right after the shade; that
+        // dialog swallows the key, so dismiss it with "Wait" and press Back again.
+        val anrWait = By.res("android:id/aerr_wait")
+        device.findObject(anrWait)?.click()
         device.pressBack()
-        compose.waitUntil(10_000) {
+        compose.waitUntil(20_000) {
+            device.findObject(anrWait)?.let {
+                it.click()
+                device.pressBack()
+            }
             runCatching { compose.onAllNodesWithContentDescription("More options").fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
         }
         takeScreenshot("home_after_reminder")
