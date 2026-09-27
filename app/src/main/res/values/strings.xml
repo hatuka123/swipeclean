@@ -36,7 +36,6 @@
     <string name="filter_photos">Photos</string>
     <string name="filter_videos">Videos</string>
     <string name="filter_both">Both</string>
-    <string name="loading">Loading…</string>
 
     <!-- Swipe (placeholder until phase 2) -->
     <string name="swipe_coming">The swipe screen arrives in the next build.</string>

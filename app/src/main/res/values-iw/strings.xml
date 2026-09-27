@@ -29,7 +29,6 @@
     <plurals name="items_count">
         <item quantity="one">פריט אחד</item>
         <item quantity="two">%1$s פריטים</item>
-        <item quantity="many">%1$s פריטים</item>
         <item quantity="other">%1$s פריטים</item>
     </plurals>
     <string name="partial_title">גישה חלקית</string>
@@ -38,7 +37,6 @@
     <string name="filter_photos">תמונות</string>
     <string name="filter_videos">סרטונים</string>
     <string name="filter_both">הכול</string>
-    <string name="loading">טוען…</string>
 
     <!-- Swipe (placeholder until phase 2) -->
     <string name="swipe_coming">מסך ההחלקה יגיע בבנייה הבאה.</string>
