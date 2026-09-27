@@ -133,4 +133,55 @@
     <string name="decision_move">להעביר…</string>
     <string name="decision_other_folder">תיקייה אחרת…</string>
     <string name="decision_no_change">בלי שינוי</string>
+
+    <!-- Phase 4: plan, reminders, stats -->
+    <string name="reminder_title">הגיע הזמן לנקות!</string>
+    <plurals name="reminder_text">
+        <item quantity="one">פריט אחד מחכה, בערך %2$d דק׳</item>
+        <item quantity="two">%1$d פריטים מחכים, בערך %2$d דק׳</item>
+        <item quantity="other">%1$d פריטים מחכים, בערך %2$d דק׳</item>
+    </plurals>
+    <string name="reminder_channel">תזכורות ניקוי יומיות</string>
+    <string name="reminder_channel_description">מזכיר לך לסקור תמונות וסרטונים בשעות שבחרת.</string>
+    <string name="settings_title">תוכנית יומית והגדרות</string>
+    <string name="stats_title">סטטיסטיקה</string>
+    <string name="plan_section">תוכנית ניקוי יומית</string>
+    <string name="plan_enabled">להזכיר לי כל יום</string>
+    <string name="plan_enabled_body">בשעות שלמטה תופיע התראה שפותחת ישר את מסך ההחלקה.</string>
+    <string name="plan_times">שעות תזכורת</string>
+    <string name="plan_add_time">להוסיף שעה</string>
+    <string name="plan_remove_time">להסיר את השעה הזו</string>
+    <string name="plan_quota">יעד יומי</string>
+    <plurals name="plan_quota_value">
+        <item quantity="one">פריט אחד ביום (בערך %2$d דק׳)</item>
+        <item quantity="two">%1$d פריטים ביום (בערך %2$d דק׳)</item>
+        <item quantity="other">%1$d פריטים ביום (בערך %2$d דק׳)</item>
+    </plurals>
+    <string name="plan_source">מה לסקור</string>
+    <string name="plan_next">התזכורת הבאה: %1$s</string>
+    <string name="plan_approximate">כדי לחסוך בסוללה, אנדרואיד עשוי להציג אותה באיחור של כמה דקות.</string>
+    <string name="plan_notifications_off">ההתראות כבויות, ולכן אי אפשר להציג תזכורות.</string>
+    <string name="plan_allow_notifications">לאפשר התראות</string>
+    <string name="plan_test_reminder">לשלוח תזכורת לניסיון עכשיו</string>
+    <string name="plan_test_sent">נשלחה תזכורת לניסיון</string>
+    <string name="plan_test_failed">לא ניתן היה להציג התראה – כדאי לבדוק שההתראות מותרות</string>
+    <string name="settings_moves_section">העברה</string>
+    <string name="settings_default_folder">תיקיית ברירת המחדל להחלקה למעלה</string>
+    <string name="settings_reset_default_folder">לחזור ל־Pictures/Found</string>
+    <string name="settings_delete_section">מחיקה</string>
+    <string name="today_progress">היום: %1$s / %2$s</string>
+    <string name="today_goal_reached">עמדת ביעד היומי 🎉</string>
+    <plurals name="streak_days">
+        <item quantity="one">רצף של יום אחד</item>
+        <item quantity="two">רצף של יומיים</item>
+        <item quantity="other">רצף של %1$s ימים</item>
+    </plurals>
+    <string name="stats_freed_total">התפנו עד עכשיו %1$s</string>
+    <string name="stats_reviewed_total">נסקרו</string>
+    <string name="stats_deleted_total">נמחקו</string>
+    <string name="stats_freed">מקום שהתפנה</string>
+    <string name="stats_streak">רצף</string>
+    <string name="stats_last_days">14 הימים האחרונים</string>
+    <string name="stats_plan_off">אפשר להפעיל תוכנית יומית כדי לקבוע יעד ולבנות רצף.</string>
+    <string name="stats_set_up_plan">להגדיר תוכנית יומית</string>
 </resources>

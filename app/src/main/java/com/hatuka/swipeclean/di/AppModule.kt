@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
+import androidx.work.WorkManager
 import com.hatuka.swipeclean.data.db.AppDatabase
 import dagger.Binds
 import dagger.Module
@@ -34,6 +35,9 @@ object AppModule {
 
     @Provides
     fun clock(): Clock = Clock.systemDefaultZone()
+
+    @Provides
+    fun workManager(@ApplicationContext context: Context): WorkManager = WorkManager.getInstance(context)
 
     @Provides
     @Singleton

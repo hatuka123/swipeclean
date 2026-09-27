@@ -12,6 +12,7 @@ import com.hatuka.swipeclean.testing.inMemoryDb
 import com.hatuka.swipeclean.testing.testSettings
 import com.hatuka.swipeclean.core.media.SortOrder
 import com.hatuka.swipeclean.data.review.DecisionActions
+import com.hatuka.swipeclean.data.review.ProgressRepository
 import com.hatuka.swipeclean.testing.row
 import com.hatuka.swipeclean.ui.nav.Routes
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +64,7 @@ class SwipeViewModelTest {
         decisions,
         settings,
         DecisionActions(decisions, media, settings),
+        ProgressRepository(db, settings, FIXED_CLOCK),
     )
 
     private suspend fun SwipeViewModel.loaded() = state.first { !it.loading }

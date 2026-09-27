@@ -14,7 +14,10 @@ import com.hatuka.swipeclean.core.review.SessionCounters
 import com.hatuka.swipeclean.core.review.SwipeSession
 import com.hatuka.swipeclean.data.db.BinSummary
 import com.hatuka.swipeclean.data.media.MediaRepository
+import com.hatuka.swipeclean.core.plan.Progress
 import com.hatuka.swipeclean.data.review.DecisionActions
+import com.hatuka.swipeclean.data.review.ProgressRepository
+import kotlinx.coroutines.flow.combine
 import com.hatuka.swipeclean.data.review.DecisionRepository
 import com.hatuka.swipeclean.data.settings.SettingsRepository
 import com.hatuka.swipeclean.ui.nav.Routes
@@ -53,7 +56,12 @@ class SwipeViewModel @Inject constructor(
     private val decisions: DecisionRepository,
     private val settings: SettingsRepository,
     private val actions: DecisionActions,
+    progressRepository: ProgressRepository,
 ) : ViewModel() {
+
+    /** Today's progress toward the daily goal; null while the plan is off. */
+    val dailyGoal: StateFlow<Progress?> = combine(progressRepository.progress, settings.plan) { p, plan -> p.takeIf { plan.enabled } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val bucketId: Long? = savedState.get<Long>("bucket")?.takeIf { it != Routes.ALL_BUCKETS }
     private val filter: MediaFilter = savedState.get<String>("filter")

@@ -62,6 +62,10 @@ import com.hatuka.swipeclean.core.media.SortOrder
 import com.hatuka.swipeclean.ui.common.BinButton
 import com.hatuka.swipeclean.ui.common.MediaThumbnail
 import com.hatuka.swipeclean.ui.common.countAndSize
+import com.hatuka.swipeclean.ui.common.formatSize
+import com.hatuka.swipeclean.ui.stats.TodayCard
+import com.hatuka.swipeclean.core.plan.Progress
+import androidx.compose.foundation.clickable
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 
@@ -75,8 +79,12 @@ fun HomeRoute(
     onOpenBin: () -> Unit,
     onOpenMoves: () -> Unit,
     onOpenReviewed: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenStats: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
+    val progress by viewModel.progress.collectAsStateWithLifecycle()
+    val plan by viewModel.plan.collectAsStateWithLifecycle()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val bin by viewModel.binSummary.collectAsStateWithLifecycle()
     val moves by viewModel.movesSummary.collectAsStateWithLifecycle()
@@ -90,6 +98,10 @@ fun HomeRoute(
         onOpenBin = onOpenBin,
         onOpenMoves = onOpenMoves,
         onOpenReviewed = onOpenReviewed,
+        onOpenSettings = onOpenSettings,
+        onOpenStats = onOpenStats,
+        progress = progress,
+        planEnabled = plan.enabled,
         coverUri = viewModel::coverUri,
         onFilter = viewModel::setFilter,
         onSort = viewModel::setSort,
@@ -125,6 +137,10 @@ fun HomeContent(
     onOpenReviewed: () -> Unit = {},
     onSort: (SortOrder) -> Unit = {},
     onResetBucket: (Long?, String?) -> Unit = { _, _ -> },
+    onOpenSettings: () -> Unit = {},
+    onOpenStats: () -> Unit = {},
+    progress: Progress? = null,
+    planEnabled: Boolean = false,
 ) {
     Scaffold(
         topBar = {
@@ -132,7 +148,7 @@ fun HomeContent(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     BinButton(binCount, onOpenBin)
-                    OverflowMenu(onOpenReviewed)
+                    OverflowMenu(onOpenReviewed, onOpenSettings, onOpenStats)
                 },
             )
         },
@@ -152,6 +168,15 @@ fun HomeContent(
             }
             if (movesCount > 0) {
                 item(key = "moves") { MovesBanner(movesCount, onOpenMoves) }
+            }
+            if (progress != null && planEnabled) {
+                item(key = "today") { TodayCard(progress, Modifier.clickable(onClick = onOpenStats)) }
+            } else if (progress != null && progress.totalBytesFreed > 0) {
+                item(key = "freed") {
+                    TextButton(onClick = onOpenStats) {
+                        Text(stringResource(R.string.stats_freed_total, formatSize(progress.totalBytesFreed)))
+                    }
+                }
             }
             item(key = "filters") { FilterRow(state.filter, onFilter, state.sort, onSort) }
             when {
@@ -209,20 +234,26 @@ fun HomeContent(
 }
 
 @Composable
-private fun OverflowMenu(onOpenReviewed: () -> Unit) {
+private fun OverflowMenu(onOpenReviewed: () -> Unit, onOpenSettings: () -> Unit, onOpenStats: () -> Unit) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
             Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more_options))
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.reviewed_title)) },
-                onClick = {
-                    open = false
-                    onOpenReviewed()
-                },
-            )
+            listOf(
+                R.string.settings_title to onOpenSettings,
+                R.string.stats_title to onOpenStats,
+                R.string.reviewed_title to onOpenReviewed,
+            ).forEach { (label, action) ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(label)) },
+                    onClick = {
+                        open = false
+                        action()
+                    },
+                )
+            }
         }
     }
 }

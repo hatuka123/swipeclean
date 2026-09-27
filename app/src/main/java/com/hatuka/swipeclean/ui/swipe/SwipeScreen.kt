@@ -12,6 +12,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.hatuka.swipeclean.core.move.TargetPathRules
+import com.hatuka.swipeclean.core.plan.Progress
+import androidx.compose.material3.LinearProgressIndicator
 import com.hatuka.swipeclean.ui.common.FolderPickerDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -89,6 +91,7 @@ fun SwipeRoute(
     val bin by viewModel.binSummary.collectAsStateWithLifecycle()
     val moves by viewModel.movesSummary.collectAsStateWithLifecycle()
     val defaultTarget by viewModel.defaultTarget.collectAsStateWithLifecycle()
+    val dailyGoal by viewModel.dailyGoal.collectAsStateWithLifecycle()
     PreloadUpcoming(state.upcoming, viewModel::uriOf)
     SwipeContent(
         state = state,
@@ -106,6 +109,7 @@ fun SwipeRoute(
         onMoveTo = viewModel::moveTo,
         loadFolderOptions = viewModel::folderOptions,
         onOpenMoves = onOpenMoves,
+        dailyGoal = dailyGoal,
     )
 }
 
@@ -140,6 +144,7 @@ fun SwipeContent(
     onMoveTo: (String, Boolean) -> Unit = { _, _ -> },
     loadFolderOptions: suspend () -> List<String> = { emptyList() },
     onOpenMoves: () -> Unit = {},
+    dailyGoal: Progress? = null,
 ) {
     var muted by rememberSaveable { mutableStateOf(true) }
     var picking by remember { mutableStateOf(false) }
@@ -220,6 +225,7 @@ fun SwipeContent(
                 .padding(padding),
         ) {
             CountersRow(state.counters)
+            dailyGoal?.let { DailyGoalBar(it) }
             Box(
                 Modifier
                     .weight(1f)
@@ -282,6 +288,21 @@ fun SwipeContent(
     }
 }
 
+
+/** Progress toward the plan's daily goal (only while the plan is on). */
+@Composable
+private fun DailyGoalBar(goal: Progress) {
+    val nf = NumberFormat.getIntegerInstance()
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
+        Text(
+            if (goal.quotaMet) stringResource(R.string.today_goal_reached)
+            else stringResource(R.string.today_progress, nf.format(goal.todayReviewed), nf.format(goal.quota)),
+            style = MaterialTheme.typography.labelMedium,
+            color = if (goal.quotaMet) LocalActionColors.current.keep else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        LinearProgressIndicator(progress = { goal.todayFraction }, modifier = Modifier.fillMaxWidth().padding(top = 2.dp))
+    }
+}
 
 @Composable
 private fun CountersRow(counters: SessionCounters) {

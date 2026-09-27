@@ -10,7 +10,10 @@ import com.hatuka.swipeclean.core.media.MediaType
 import com.hatuka.swipeclean.core.media.SortOrder
 import com.hatuka.swipeclean.data.db.BinSummary
 import com.hatuka.swipeclean.data.media.MediaRepository
+import com.hatuka.swipeclean.core.plan.CleanupPlan
+import com.hatuka.swipeclean.core.plan.Progress
 import com.hatuka.swipeclean.data.review.DecisionRepository
+import com.hatuka.swipeclean.data.review.ProgressRepository
 import com.hatuka.swipeclean.data.settings.SettingsRepository
 import com.hatuka.swipeclean.permissions.MediaAccessMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,7 +47,14 @@ class HomeViewModel @Inject constructor(
     access: MediaAccessMonitor,
     private val decisions: DecisionRepository,
     private val settings: SettingsRepository,
+    progressRepository: ProgressRepository,
 ) : ViewModel() {
+
+    val progress: StateFlow<Progress?> = progressRepository.progress
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    val plan: StateFlow<CleanupPlan> = settings.plan
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CleanupPlan())
 
     val binSummary: StateFlow<BinSummary> = decisions.binSummary()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BinSummary(0, 0))

@@ -10,6 +10,7 @@ import com.hatuka.swipeclean.core.media.MediaRow
 import com.hatuka.swipeclean.core.media.MediaType
 import com.hatuka.swipeclean.data.db.AppDatabase
 import com.hatuka.swipeclean.data.review.DecisionRepository
+import com.hatuka.swipeclean.data.review.ProgressRepository
 import com.hatuka.swipeclean.permissions.MediaAccessMonitor
 import com.hatuka.swipeclean.testing.FIXED_CLOCK
 import com.hatuka.swipeclean.testing.FakeMediaRepository
@@ -52,7 +53,10 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = HomeViewModel(repo, MediaAccessMonitor(app), DecisionRepository(db, FIXED_CLOCK), testSettings())
+    private fun viewModel(): HomeViewModel {
+        val settings = testSettings()
+        return HomeViewModel(repo, MediaAccessMonitor(app), DecisionRepository(db, FIXED_CLOCK), settings, ProgressRepository(db, settings, FIXED_CLOCK))
+    }
 
     private fun grantAll() = shadowOf(app).grantPermissions(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
 

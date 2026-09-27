@@ -3,10 +3,16 @@ package com.hatuka.swipeclean.data.settings
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.hatuka.swipeclean.core.media.MediaFilter
 import com.hatuka.swipeclean.core.media.SortOrder
 import com.hatuka.swipeclean.core.move.TargetPathRules
+import com.hatuka.swipeclean.core.plan.CleanupPlan
+import com.hatuka.swipeclean.core.plan.PlanCodec
+import com.hatuka.swipeclean.core.plan.PlanSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -31,6 +37,30 @@ class SettingsRepository @Inject constructor(
 
     val sortOrder: Flow<SortOrder> = store.data.map { it[SORT].toEnum(SortOrder.OLDEST_FIRST) }
 
+    /** The daily cleanup plan (reminder times, quota, source). */
+    val plan: Flow<CleanupPlan> = store.data.map { prefs ->
+        val slots = prefs[PLAN_SLOTS]?.let(PlanCodec::decode)
+        CleanupPlan(
+            enabled = prefs[PLAN_ENABLED] ?: false,
+            slots = if (slots.isNullOrEmpty()) listOf(CleanupPlan.DEFAULT_SLOT) else slots,
+            quota = (prefs[PLAN_QUOTA] ?: CleanupPlan.DEFAULT_QUOTA).coerceIn(CleanupPlan.MIN_QUOTA, CleanupPlan.MAX_QUOTA),
+            source = PlanSource(
+                bucketId = prefs[PLAN_BUCKET]?.takeIf { it >= 0 },
+                bucketName = prefs[PLAN_BUCKET_NAME],
+                filter = prefs[PLAN_FILTER].toEnum(MediaFilter.BOTH),
+            ),
+        )
+    }
+
+    suspend fun setPlan(plan: CleanupPlan) = store.edit {
+        it[PLAN_ENABLED] = plan.enabled
+        it[PLAN_SLOTS] = PlanCodec.encode(plan.slots)
+        it[PLAN_QUOTA] = plan.quota.coerceIn(CleanupPlan.MIN_QUOTA, CleanupPlan.MAX_QUOTA)
+        it[PLAN_BUCKET] = plan.source.bucketId ?: -1L
+        if (plan.source.bucketName != null) it[PLAN_BUCKET_NAME] = plan.source.bucketName else it.remove(PLAN_BUCKET_NAME)
+        it[PLAN_FILTER] = plan.source.filter.name
+    }
+
     suspend fun setDeleteMode(mode: DeleteMode) = store.edit { it[DELETE_MODE] = mode.name }
 
     suspend fun setDefaultTarget(path: String) {
@@ -50,5 +80,11 @@ class SettingsRepository @Inject constructor(
         val DEFAULT_TARGET = stringPreferencesKey("default_target")
         val FILTER = stringPreferencesKey("filter")
         val SORT = stringPreferencesKey("sort")
+        val PLAN_ENABLED = booleanPreferencesKey("plan_enabled")
+        val PLAN_SLOTS = stringPreferencesKey("plan_slots")
+        val PLAN_QUOTA = intPreferencesKey("plan_quota")
+        val PLAN_BUCKET = longPreferencesKey("plan_bucket")
+        val PLAN_BUCKET_NAME = stringPreferencesKey("plan_bucket_name")
+        val PLAN_FILTER = stringPreferencesKey("plan_filter")
     }
 }

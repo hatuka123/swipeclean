@@ -129,4 +129,52 @@
     <string name="decision_move">Move…</string>
     <string name="decision_other_folder">Other folder…</string>
     <string name="decision_no_change">No change</string>
+
+    <!-- Phase 4: plan, reminders, stats -->
+    <string name="reminder_title">Time to clean!</string>
+    <plurals name="reminder_text">
+        <item quantity="one">%1$d item waiting, about %2$d min</item>
+        <item quantity="other">%1$d items waiting, about %2$d min</item>
+    </plurals>
+    <string name="reminder_channel">Daily cleanup reminders</string>
+    <string name="reminder_channel_description">Reminds you to review photos and videos at the times you choose.</string>
+    <string name="settings_title">Daily plan &amp; settings</string>
+    <string name="stats_title">Statistics</string>
+    <string name="plan_section">Daily cleanup plan</string>
+    <string name="plan_enabled">Remind me every day</string>
+    <string name="plan_enabled_body">A notification at the times below opens the swipe screen right away.</string>
+    <string name="plan_times">Reminder times</string>
+    <string name="plan_add_time">Add a time</string>
+    <string name="plan_remove_time">Remove this time</string>
+    <string name="plan_quota">Daily goal</string>
+    <plurals name="plan_quota_value">
+        <item quantity="one">%1$d item a day (about %2$d min)</item>
+        <item quantity="other">%1$d items a day (about %2$d min)</item>
+    </plurals>
+    <string name="plan_source">What to review</string>
+    <string name="plan_next">Next reminder: %1$s</string>
+    <string name="plan_approximate">Android may deliver it a few minutes late to save battery.</string>
+    <string name="plan_notifications_off">Notifications are turned off, so reminders can\'t be shown.</string>
+    <string name="plan_allow_notifications">Allow notifications</string>
+    <string name="plan_test_reminder">Send a test reminder now</string>
+    <string name="plan_test_sent">Test reminder sent</string>
+    <string name="plan_test_failed">Couldn\'t show a notification – check that notifications are allowed</string>
+    <string name="settings_moves_section">Moving</string>
+    <string name="settings_default_folder">Default folder for swipe up</string>
+    <string name="settings_reset_default_folder">Reset to Pictures/Found</string>
+    <string name="settings_delete_section">Deleting</string>
+    <string name="today_progress">Today: %1$s / %2$s</string>
+    <string name="today_goal_reached">Daily goal reached 🎉</string>
+    <plurals name="streak_days">
+        <item quantity="one">%1$s day streak</item>
+        <item quantity="other">%1$s day streak</item>
+    </plurals>
+    <string name="stats_freed_total">%1$s freed so far</string>
+    <string name="stats_reviewed_total">Reviewed</string>
+    <string name="stats_deleted_total">Deleted</string>
+    <string name="stats_freed">Space freed</string>
+    <string name="stats_streak">Streak</string>
+    <string name="stats_last_days">Last 14 days</string>
+    <string name="stats_plan_off">Turn on the daily plan to set a goal and build a streak.</string>
+    <string name="stats_set_up_plan">Set up a daily plan</string>
 </resources>

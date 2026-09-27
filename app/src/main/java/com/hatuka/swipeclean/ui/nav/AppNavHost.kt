@@ -21,6 +21,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
+import com.hatuka.swipeclean.ui.settings.SettingsRoute
+import com.hatuka.swipeclean.ui.stats.StatsRoute
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import com.hatuka.swipeclean.core.access.MediaAccess
 import com.hatuka.swipeclean.core.media.MediaFilter
 import com.hatuka.swipeclean.core.media.SortOrder
@@ -39,6 +44,14 @@ object Routes {
     const val BIN = "bin"
     const val MOVES = "moves"
     const val REVIEWED = "reviewed"
+    const val SETTINGS = "settings"
+    const val STATS = "stats"
+
+    /** Opened from the reminder notification; matched against the swipe destination. */
+    const val SWIPE_DEEP_LINK = "swipeclean://swipe?bucket={bucket}&filter={filter}&sort={sort}"
+
+    fun swipeDeepLink(bucketId: Long?, filter: MediaFilter, sort: SortOrder) =
+        "swipeclean://swipe?bucket=${bucketId ?: ALL_BUCKETS}&filter=${filter.name}&sort=${sort.name}"
 
     /** [bucketId] null means "All photos & videos". */
     fun swipe(bucketId: Long?, filter: MediaFilter, sort: SortOrder = SortOrder.OLDEST_FIRST) =
@@ -48,7 +61,7 @@ object Routes {
 }
 
 @Composable
-fun AppNavHost(accessMonitor: MediaAccessMonitor) {
+fun AppNavHost(accessMonitor: MediaAccessMonitor, newIntents: Flow<Intent> = emptyFlow()) {
     val access by accessMonitor.access.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var denied by rememberSaveable { mutableStateOf(false) }
@@ -66,6 +79,9 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor) {
     }
 
     val nav = rememberNavController()
+
+    // A reminder tapped while the app is already open arrives as a new intent (singleTop).
+    LaunchedEffect(nav) { newIntents.collect { nav.handleDeepLink(it) } }
     val start = remember { if (access == MediaAccess.NONE) Routes.ONBOARDING else Routes.HOME }
 
     LaunchedEffect(access) {
@@ -91,6 +107,8 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor) {
                     onOpenBin = { nav.navigate(Routes.BIN) },
                     onOpenMoves = { nav.navigate(Routes.MOVES) },
                     onOpenReviewed = { nav.navigate(Routes.REVIEWED) },
+                    onOpenSettings = { nav.navigate(Routes.SETTINGS) },
+                    onOpenStats = { nav.navigate(Routes.STATS) },
                 )
             }
         }
@@ -101,6 +119,7 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor) {
                 navArgument("filter") { type = NavType.StringType; defaultValue = MediaFilter.BOTH.name },
                 navArgument("sort") { type = NavType.StringType; defaultValue = SortOrder.OLDEST_FIRST.name },
             ),
+            deepLinks = listOf(navDeepLink { uriPattern = Routes.SWIPE_DEEP_LINK }),
         ) {
             SwipeRoute(
                 onBack = { nav.popBackStack() },
@@ -116,6 +135,12 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor) {
         }
         composable(Routes.REVIEWED) {
             ReviewedRoute(onBack = { nav.popBackStack() })
+        }
+        composable(Routes.SETTINGS) {
+            SettingsRoute(onBack = { nav.popBackStack() })
+        }
+        composable(Routes.STATS) {
+            StatsRoute(onBack = { nav.popBackStack() }, onOpenSettings = { nav.navigate(Routes.SETTINGS) })
         }
     }
 }
