@@ -1,0 +1,106 @@
+name: Verify branch
+
+# Every branch except main: build, lint, unit tests, screenshots, then emulator tests on
+# API 30, 33 and 34. Nothing is sent to Telegram; only a green branch is merged to main
+# (which triggers android-build.yml).
+on:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_VERSION: "9.6.0"
+
+jobs:
+  jvm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Build, lint and unit tests
+        run: gradle assembleDebug assembleRelease lint testDebugUnitTest :core:test --stacktrace
+
+      - name: Check merged manifest (Play policy)
+        run: bash .github/scripts/check-manifest.sh
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens
+          path: app/build/screens/
+          if-no-files-found: ignore
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            app/build/reports/
+            core/build/reports/
+          if-no-files-found: ignore
+
+  emulator:
+    needs: jvm
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [30, 33, 34]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Generate seed media
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+          bash .github/scripts/make-seed-media.sh seed
+
+      - name: Build test APKs
+        run: gradle assembleDebug assembleDebugAndroidTest
+
+      - name: Emulator tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash .github/scripts/emulator-tests.sh ${{ matrix.api }}
+
+      - name: Upload emulator screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-api${{ matrix.api }}
+          path: emulator-out/
+          if-no-files-found: ignore

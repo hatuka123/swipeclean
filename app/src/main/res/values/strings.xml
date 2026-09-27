@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SwipeClean</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Free up space, one swipe at a time</string>
+    <string name="onboarding_body">SwipeClean shows your photos and videos one by one, so cleaning up takes minutes instead of hours.</string>
+    <string name="gesture_keep">Swipe right to keep</string>
+    <string name="gesture_delete">Swipe left to mark for deletion</string>
+    <string name="gesture_move">Swipe up to move to a folder</string>
+    <string name="perm_media_title">Access to photos and videos</string>
+    <string name="perm_media_body">Needed to show your gallery. Everything stays on your phone: SwipeClean has no internet access, no ads and no analytics.</string>
+    <string name="perm_safe_title">Nothing is deleted without your OK</string>
+    <string name="perm_safe_body">Items you swipe left wait in the app\'s bin. Android asks you to confirm before anything is moved or deleted, and deleted items stay in the system trash for about 30 days.</string>
+    <string name="perm_notify_title">Daily reminders (optional)</string>
+    <string name="perm_notify_body">If you set up a daily cleanup plan, SwipeClean will ask for permission to show a reminder notification.</string>
+    <string name="onboarding_allow">Allow access</string>
+    <string name="denied_title">No access to your gallery</string>
+    <string name="denied_body">SwipeClean can\'t work without access to your photos and videos. You can allow it in the app settings, under Permissions.</string>
+    <string name="denied_open_settings">Open settings</string>
+    <string name="denied_try_again">Try again</string>
+
+    <!-- Home -->
+    <string name="home_all">All photos &amp; videos</string>
+    <string name="home_folders">Folders</string>
+    <string name="home_empty">No photos or videos found</string>
+    <string name="home_empty_partial">You haven\'t selected any photos yet</string>
+    <string name="home_count_size">%1$s · %2$s</string>
+    <plurals name="items_count">
+        <item quantity="one">%1$s item</item>
+        <item quantity="other">%1$s items</item>
+    </plurals>
+    <string name="partial_title">Limited access</string>
+    <string name="partial_body">You gave SwipeClean access to selected photos only, so only those are shown.</string>
+    <string name="partial_change">Select more or allow all</string>
+    <string name="filter_photos">Photos</string>
+    <string name="filter_videos">Videos</string>
+    <string name="filter_both">Both</string>
+    <string name="loading">Loading…</string>
+
+    <!-- Swipe (placeholder until phase 2) -->
+    <string name="swipe_coming">The swipe screen arrives in the next build.</string>
+    <string name="back">Back</string>
+</resources>

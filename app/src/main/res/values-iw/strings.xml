@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ניקוי בהחלקה</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">מפנים מקום, החלקה אחרי החלקה</string>
+    <string name="onboarding_body">האפליקציה מציגה את התמונות והסרטונים אחד אחרי השני, כך שהניקוי לוקח דקות ולא שעות.</string>
+    <string name="gesture_keep">החלקה ימינה – לשמור</string>
+    <string name="gesture_delete">החלקה שמאלה – לסמן למחיקה</string>
+    <string name="gesture_move">החלקה למעלה – להעביר לתיקייה</string>
+    <string name="perm_media_title">גישה לתמונות ולסרטונים</string>
+    <string name="perm_media_body">נדרשת כדי להציג את הגלריה. הכול נשאר בטלפון: לאפליקציה אין גישה לאינטרנט, אין פרסומות ואין מעקב.</string>
+    <string name="perm_safe_title">שום דבר לא נמחק בלי אישור שלך</string>
+    <string name="perm_safe_body">פריטים שהחלקת שמאלה מחכים בסל של האפליקציה. אנדרואיד מבקש אישור לפני כל העברה או מחיקה, ופריטים שנמחקו נשארים בסל המחזור של המערכת כ־30 יום.</string>
+    <string name="perm_notify_title">תזכורות יומיות (לא חובה)</string>
+    <string name="perm_notify_body">אם תגדיר תוכנית ניקוי יומית, האפליקציה תבקש הרשאה להציג התראת תזכורת.</string>
+    <string name="onboarding_allow">לאפשר גישה</string>
+    <string name="denied_title">אין גישה לגלריה</string>
+    <string name="denied_body">האפליקציה לא יכולה לעבוד בלי גישה לתמונות ולסרטונים. אפשר לאשר זאת בהגדרות האפליקציה, תחת "הרשאות".</string>
+    <string name="denied_open_settings">פתיחת ההגדרות</string>
+    <string name="denied_try_again">לנסות שוב</string>
+
+    <!-- Home -->
+    <string name="home_all">כל התמונות והסרטונים</string>
+    <string name="home_folders">תיקיות</string>
+    <string name="home_empty">לא נמצאו תמונות או סרטונים</string>
+    <string name="home_empty_partial">עדיין לא בחרת תמונות</string>
+    <string name="home_count_size">%1$s · %2$s</string>
+    <plurals name="items_count">
+        <item quantity="one">פריט אחד</item>
+        <item quantity="two">%1$s פריטים</item>
+        <item quantity="many">%1$s פריטים</item>
+        <item quantity="other">%1$s פריטים</item>
+    </plurals>
+    <string name="partial_title">גישה חלקית</string>
+    <string name="partial_body">נתת לאפליקציה גישה רק לתמונות שבחרת, ולכן רק הן מוצגות.</string>
+    <string name="partial_change">לבחור עוד או לאפשר הכול</string>
+    <string name="filter_photos">תמונות</string>
+    <string name="filter_videos">סרטונים</string>
+    <string name="filter_both">הכול</string>
+    <string name="loading">טוען…</string>
+
+    <!-- Swipe (placeholder until phase 2) -->
+    <string name="swipe_coming">מסך ההחלקה יגיע בבנייה הבאה.</string>
+    <string name="back">חזרה</string>
+</resources>
