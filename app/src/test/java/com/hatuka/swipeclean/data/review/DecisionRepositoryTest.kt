@@ -133,4 +133,17 @@ class DecisionRepositoryTest {
         repo.changeDecision(listOf(1), DecisionState.DELETE_PENDING)
         assertEquals(setOf(1L, 2L), repo.pendingDeletes().map { it.mediaId }.toSet())
     }
+
+    @Test
+    fun `a move done as copy records both the original and the copy as moved`() = runTest {
+        repo.record(SwipeRecord(row(1), DecisionState.MOVE_PENDING, "Pictures/Found/"))
+        repo.recordCopy(repo.pendingMoves().single(), newId = 99)
+        assertEquals(DecisionState.MOVED, repo.get(1)?.state)
+        val copy = repo.get(99)!!
+        assertEquals(DecisionState.MOVED, copy.state)
+        assertEquals("Pictures/Found/", copy.relativePath)
+        assertEquals("Found", copy.bucketName)
+        assertEquals(setOf(1L, 99L), repo.decidedIds())
+        assertEquals(0, repo.movesSummary().first().count)
+    }
 }
