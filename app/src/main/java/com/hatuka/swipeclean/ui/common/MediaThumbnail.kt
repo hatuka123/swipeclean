@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -38,8 +39,9 @@ fun MediaThumbnail(
         if (uri == null) {
             Icon(Icons.Filled.PhotoLibrary, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
+            val sizePx = with(LocalDensity.current) { size.roundToPx() }
             AsyncImage(
-                model = uri,
+                model = MediaThumb(uri, sizePx),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(size),

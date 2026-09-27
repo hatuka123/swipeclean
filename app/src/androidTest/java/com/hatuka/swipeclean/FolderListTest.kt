@@ -42,6 +42,7 @@ class FolderListTest {
         compose.onNodeWithText("12 items", substring = true).assertExists()
         compose.onNodeWithText("SeedScreens").assertExists()
         compose.onNodeWithText("5 items", substring = true).assertExists()
+        Thread.sleep(THUMBNAIL_SETTLE_MS) // thumbnails load asynchronously; slow on CI emulators
         takeScreenshot("home")
     }
 
@@ -51,6 +52,7 @@ class FolderListTest {
         compose.onNodeWithText("Videos").performClick()
         compose.waitUntil(10_000) { compose.onAllNodes(hasText("SeedScreens")).fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithText("SeedCamera").assertExists()
+        Thread.sleep(THUMBNAIL_SETTLE_MS)
         takeScreenshot("home_videos")
     }
 
@@ -59,5 +61,9 @@ class FolderListTest {
         waitForText("SeedCamera")
         compose.onNodeWithText("SeedCamera").performClick()
         waitForText("The swipe screen arrives in the next build.")
+    }
+
+    private companion object {
+        const val THUMBNAIL_SETTLE_MS = 3_000L
     }
 }
