@@ -41,3 +41,17 @@ fun resetHomeFilter(compose: ComposeTestRule) {
     compose.onNodeWithText("Both").performClick()
     compose.waitForIdle()
 }
+
+/**
+ * Clicks a text node, retrying when the list is still recomposing (e.g. right after a filter
+ * change), which otherwise makes touch injection fail intermittently on slow emulators.
+ */
+fun clickText(compose: ComposeTestRule, text: String, attempts: Int = 5) {
+    repeat(attempts) { attempt ->
+        compose.waitForIdle()
+        val result = runCatching { compose.onNodeWithText(text).performClick() }
+        if (result.isSuccess) return
+        if (attempt == attempts - 1) throw result.exceptionOrNull()!!
+        Thread.sleep(500)
+    }
+}

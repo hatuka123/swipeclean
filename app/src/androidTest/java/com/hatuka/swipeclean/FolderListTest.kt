@@ -63,7 +63,7 @@ class FolderListTest {
     fun openingAFolderNavigatesToSwipe() {
         resetHomeFilter(compose)
         waitForText("SeedCamera")
-        compose.onNodeWithText("SeedCamera").performClick()
+        clickText(compose, "SeedCamera")
         compose.waitUntil(20_000) {
             compose.onAllNodes(hasText("12 left")).fetchSemanticsNodes().isNotEmpty()
         }
