@@ -3,6 +3,7 @@ package com.hatuka.swipeclean
 import android.os.Build
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -75,7 +76,7 @@ class ReminderFlowTest {
         waitForText(compose, "Test reminder sent")
 
         // Last step on purpose: after the tap from the shade, Compose touch injection is unreliable on
-        // the emulators ("Failed to inject touch input"), so only assertions follow.
+        // the emulators ("Failed to inject touch input"), so only assertions and key presses follow.
         val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         // The shade can open while the heads-up is still animating and miss the new entry; retry.
         val notification = (1..3).firstNotNullOfOrNull {
@@ -94,5 +95,12 @@ class ReminderFlowTest {
             runCatching { compose.onAllNodes(hasTestTag(SWIPE_CARD_TAG)).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
         }
         takeScreenshot("swipe_from_reminder")
+
+        // Back from a reminder returns to Home (a key press: Compose touch input is what fails here).
+        device.pressBack()
+        compose.waitUntil(10_000) {
+            runCatching { compose.onAllNodesWithContentDescription("More options").fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
+        }
+        takeScreenshot("home_after_reminder")
     }
 }

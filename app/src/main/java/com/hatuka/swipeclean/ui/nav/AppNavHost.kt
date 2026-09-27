@@ -21,7 +21,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.navigation.navDeepLink
 import com.hatuka.swipeclean.ui.settings.SettingsRoute
 import com.hatuka.swipeclean.ui.stats.StatsRoute
 import kotlinx.coroutines.flow.Flow
@@ -47,9 +46,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val STATS = "stats"
 
-    /** Opened from the reminder notification; matched against the swipe destination. */
-    const val SWIPE_DEEP_LINK = "swipeclean://swipe?bucket={bucket}&filter={filter}&sort={sort}"
-
+    /** Link in the reminder notification; turned into a [swipe] route by [swipeFromDeepLink]. */
     fun swipeDeepLink(bucketId: Long?, filter: MediaFilter, sort: SortOrder) =
         "swipeclean://swipe?bucket=${bucketId ?: ALL_BUCKETS}&filter=${filter.name}&sort=${sort.name}"
 
@@ -58,10 +55,19 @@ object Routes {
         "swipe?bucket=${bucketId ?: ALL_BUCKETS}&filter=${filter.name}&sort=${sort.name}"
 
     const val ALL_BUCKETS = -1L
+
+    /** The swipe route for a reminder link from [swipeDeepLink], or null if [uri] is not one. */
+    fun swipeFromDeepLink(uri: Uri): String? {
+        if (uri.scheme != "swipeclean" || uri.host != "swipe") return null
+        val bucket = uri.getQueryParameter("bucket")?.toLongOrNull()?.takeIf { it != ALL_BUCKETS }
+        val filter = MediaFilter.entries.find { it.name == uri.getQueryParameter("filter") } ?: MediaFilter.BOTH
+        val sort = SortOrder.entries.find { it.name == uri.getQueryParameter("sort") } ?: SortOrder.OLDEST_FIRST
+        return swipe(bucket, filter, sort)
+    }
 }
 
 @Composable
-fun AppNavHost(accessMonitor: MediaAccessMonitor, newIntents: Flow<Intent> = emptyFlow()) {
+fun AppNavHost(accessMonitor: MediaAccessMonitor, reminderLinks: Flow<Uri> = emptyFlow()) {
     val access by accessMonitor.access.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var denied by rememberSaveable { mutableStateOf(false) }
@@ -80,8 +86,6 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor, newIntents: Flow<Intent> = emp
 
     val nav = rememberNavController()
 
-    // A reminder tapped while the app is already open arrives as a new intent (singleTop).
-    LaunchedEffect(nav) { newIntents.collect { nav.handleDeepLink(it) } }
     val start = remember { if (access == MediaAccess.NONE) Routes.ONBOARDING else Routes.HOME }
 
     LaunchedEffect(access) {
@@ -119,7 +123,6 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor, newIntents: Flow<Intent> = emp
                 navArgument("filter") { type = NavType.StringType; defaultValue = MediaFilter.BOTH.name },
                 navArgument("sort") { type = NavType.StringType; defaultValue = SortOrder.OLDEST_FIRST.name },
             ),
-            deepLinks = listOf(navDeepLink { uriPattern = Routes.SWIPE_DEEP_LINK }),
         ) {
             SwipeRoute(
                 onBack = { nav.popBackStack() },
@@ -141,6 +144,17 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor, newIntents: Flow<Intent> = emp
         }
         composable(Routes.STATS) {
             StatsRoute(onBack = { nav.popBackStack() }, onOpenSettings = { nav.navigate(Routes.SETTINGS) })
+        }
+    }
+
+    // A tapped reminder opens the swipe screen on top of Home, like tapping a folder, so Back returns
+    // to Home. (NavController's own deep-link handling would leave the swipe screen alone in the
+    // back stack, or restart the whole task when the intent carries NEW_TASK.)
+    LaunchedEffect(nav) {
+        reminderLinks.collect { uri ->
+            val route = Routes.swipeFromDeepLink(uri) ?: return@collect
+            if (accessMonitor.access.value == MediaAccess.NONE) return@collect
+            nav.navigate(route) { popUpTo(Routes.HOME) }
         }
     }
 }
