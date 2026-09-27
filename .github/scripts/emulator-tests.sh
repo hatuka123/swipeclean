@@ -80,5 +80,29 @@ if [ "$api" -ge 34 ]; then
 fi
 
 adb pull "/sdcard/Android/data/$pkg/files/shots" "$out/" || echo "no screenshots pulled"
+
+# 4) The shrunk release build (R8), as sent to Telegram: it must start, open the swipe screen from
+# a reminder link and load media without crashing. Installed over the debug app (same key).
+echo "::group::release-smoke"
+for p in $perms; do adb shell pm grant $pkg "$p" 2>/dev/null || true; done
+adb install -r app/build/outputs/apk/releaseCheck/app-releaseCheck.apk
+adb logcat -c || true
+adb shell am force-stop $pkg
+adb shell am start -W -n "$pkg/.MainActivity"
+sleep 8
+adb exec-out screencap -p > "$out/release_home_api$api.png" || true
+adb shell am start -W -a android.intent.action.VIEW   -d "swipeclean://swipe?bucket=-1\&filter=BOTH\&sort=OLDEST_FIRST" -n "$pkg/.MainActivity"
+sleep 8
+adb exec-out screencap -p > "$out/release_swipe_api$api.png" || true
+adb logcat -d -b crash > "$out/release-crash.txt" || true
+if grep -q "$pkg" "$out/release-crash.txt" || [ -z "$(adb shell pidof $pkg)" ]; then
+  cat "$out/release-crash.txt"
+  echo "::error::release build crashed or is not running on API $api"
+  failed=1
+else
+  echo "release build OK"
+fi
+echo "::endgroup::"
+
 adb logcat -d > "$out/logcat.txt" || true
 exit $failed

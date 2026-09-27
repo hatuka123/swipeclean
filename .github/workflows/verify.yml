@@ -92,7 +92,7 @@ jobs:
           bash .github/scripts/make-seed-media.sh seed
 
       - name: Build test APKs
-        run: gradle assembleDebug assembleDebugAndroidTest
+        run: gradle assembleDebug assembleDebugAndroidTest assembleReleaseCheck
 
       - name: Emulator tests
         uses: reactivecircus/android-emulator-runner@v2

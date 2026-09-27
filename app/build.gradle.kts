@@ -43,6 +43,13 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             if (keystorePath != null) signingConfig = signingConfigs.getByName("release")
         }
+        // The release build (R8 shrinking and all) signed with the debug key, so the emulator job can
+        // install it over the debug app and check that the shrunk app still starts and works.
+        create("releaseCheck") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
     }
 
     compileOptions {
