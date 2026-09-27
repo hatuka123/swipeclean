@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
@@ -29,6 +30,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_TEXTURE_VIEW
 import coil3.compose.AsyncImage
+
+const val VIDEO_POSTER_TAG = "video_poster"
 
 /**
  * Auto-playing, looping video for the top card. Starts muted; audio focus is only requested
@@ -45,13 +48,13 @@ fun VideoContent(
 ) {
     val context = LocalContext.current
     val currentOnError by rememberUpdatedState(onError)
+    // Prepared only after the listener is attached (below), so no size/first-frame event is missed.
     val player = remember(uri) {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(uri))
             repeatMode = Player.REPEAT_MODE_ONE
             volume = 0f
             playWhenReady = true
-            prepare()
         }
     }
     var aspect by remember(uri) { mutableFloatStateOf(0f) }
@@ -74,6 +77,7 @@ fun VideoContent(
             }
         }
         player.addListener(listener)
+        player.prepare()
         onDispose {
             player.removeListener(listener)
             player.release()
@@ -92,15 +96,20 @@ fun VideoContent(
     }
 
     Box(modifier, contentAlignment = Alignment.Center) {
-        if (aspect > 0f) {
-            PlayerSurface(
-                player = player,
-                surfaceType = SURFACE_TYPE_TEXTURE_VIEW,
-                modifier = Modifier.aspectRatio(aspect),
-            )
-        }
+        // The surface exists from the start (the player needs it to render any frame); it only
+        // changes shape once the video size is known. The poster covers it until the first frame.
+        PlayerSurface(
+            player = player,
+            surfaceType = SURFACE_TYPE_TEXTURE_VIEW,
+            modifier = if (aspect > 0f) Modifier.aspectRatio(aspect) else Modifier.fillMaxSize(),
+        )
         if (!firstFrame) {
-            AsyncImage(model = uri, contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
+            AsyncImage(
+                model = uri,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize().testTag(VIDEO_POSTER_TAG),
+            )
         }
     }
 }
