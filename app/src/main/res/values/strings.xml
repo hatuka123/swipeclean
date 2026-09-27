@@ -79,4 +79,53 @@
     <string name="decision_keep">Keep</string>
     <string name="decision_leave">Leave in bin</string>
     <string name="more_options">More options</string>
+
+    <!-- Phase 3: moves, sort, history, reset -->
+    <string name="action_move_to">Move to %1$s</string>
+    <string name="action_pick_folder">Choose folder</string>
+    <string name="picker_title">Move to folder</string>
+    <string name="picker_new_folder">New folder name</string>
+    <string name="picker_make_default">Use this folder for every swipe up</string>
+    <string name="picker_default_badge">default</string>
+    <string name="picker_move">Move</string>
+    <string name="cancel">Cancel</string>
+    <string name="open_moves_count">Move %1$s items now</string>
+    <string name="moves_title">Waiting to move</string>
+    <string name="moves_note">Android asks once for permission to move all of these. Tap an item to change your decision.</string>
+    <string name="moves_apply_all">Move all (%1$s)</string>
+    <string name="moves_empty">Nothing waiting to move</string>
+    <string name="moves_empty_body">Items you swipe up are queued here, then moved together with one confirmation.</string>
+    <string name="moves_result_moved">Moved %1$s items</string>
+    <string name="moves_result_failed">%1$s items could not be moved and are still waiting</string>
+    <string name="moves_result_cancelled">Cancelled – nothing was moved</string>
+    <string name="home_moves_banner">%1$s items are waiting to be moved</string>
+    <string name="home_reset_hint">Long-press a folder to review it again</string>
+    <string name="home_all_reviewed">All reviewed ✓</string>
+    <plurals name="to_review">
+        <item quantity="one">%1$s to review</item>
+        <item quantity="other">%1$s to review</item>
+    </plurals>
+    <string name="sort_title">Order</string>
+    <string name="sort_oldest">Oldest first</string>
+    <string name="sort_newest">Newest first</string>
+    <string name="sort_largest">Largest first</string>
+    <string name="reset_title">Review %1$s again?</string>
+    <plurals name="reset_body">
+        <item quantity="one">%1$s kept or moved item will show up again when you swipe this folder. Items in the bin or waiting to move are not affected.</item>
+        <item quantity="other">%1$s kept or moved items will show up again when you swipe this folder. Items in the bin or waiting to move are not affected.</item>
+    </plurals>
+    <string name="reset_nothing">There is nothing to review again here yet.</string>
+    <string name="reset_confirm">Show again</string>
+    <string name="reviewed_title">Reviewed items</string>
+    <string name="reviewed_hint">Everything you kept or moved. Tap an item to change your decision.</string>
+    <string name="reviewed_all_folders">All folders</string>
+    <string name="reviewed_empty">Nothing reviewed yet</string>
+    <string name="status_in_bin">In the bin</string>
+    <string name="status_move_pending">Waiting to move to %1$s</string>
+    <string name="status_moved">Moved to %1$s</string>
+    <string name="status_kept">Kept</string>
+    <string name="decision_delete">Delete</string>
+    <string name="decision_move">Move…</string>
+    <string name="decision_other_folder">Other folder…</string>
+    <string name="decision_no_change">No change</string>
 </resources>

@@ -5,6 +5,10 @@ import android.content.Context
 import com.hatuka.swipeclean.data.media.IoDispatcher
 import com.hatuka.swipeclean.data.media.MediaRepository
 import com.hatuka.swipeclean.data.media.MediaStoreRepository
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.hatuka.swipeclean.data.db.AppDatabase
 import dagger.Binds
@@ -30,6 +34,11 @@ object AppModule {
 
     @Provides
     fun clock(): Clock = Clock.systemDefaultZone()
+
+    @Provides
+    @Singleton
+    fun settingsStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(produceFile = { context.preferencesDataStoreFile("settings") })
 
     @Provides
     @Singleton

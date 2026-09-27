@@ -19,7 +19,8 @@ interface MediaRepository {
     /** Emits once immediately and then (debounced) whenever the gallery changes. */
     fun galleryChanges(): Flow<Unit>
 
-    suspend fun loadBuckets(filter: MediaFilter): BucketList
+    /** Folders with counts; [decided] marks reviewed items for the "to review" counts. */
+    suspend fun loadBuckets(filter: MediaFilter, decided: Set<Long> = emptySet()): BucketList
 
     /** All items of one bucket (or all buckets when [bucketId] is null), unsorted. */
     suspend fun loadRows(bucketId: Long?, filter: MediaFilter): List<MediaRow>
@@ -40,9 +41,9 @@ class MediaStoreRepository @Inject constructor(
     override fun galleryChanges(): Flow<Unit> =
         source.changes().debounce(CHANGE_DEBOUNCE_MS).onStart { emit(Unit) }
 
-    override suspend fun loadBuckets(filter: MediaFilter): BucketList = withContext(io) {
+    override suspend fun loadBuckets(filter: MediaFilter, decided: Set<Long>): BucketList = withContext(io) {
         val types = MediaType.entries.filter(filter::includes).toSet()
-        BucketAggregator.aggregate(source.queryRows(types).asSequence(), filter)
+        BucketAggregator.aggregate(source.queryRows(types).asSequence(), filter, decided)
     }
 
     override suspend fun loadRows(bucketId: Long?, filter: MediaFilter): List<MediaRow> = withContext(io) {

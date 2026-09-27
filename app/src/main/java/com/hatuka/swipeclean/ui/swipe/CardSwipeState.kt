@@ -29,6 +29,12 @@ class CardSwipeState(val thresholds: SwipeThresholds = SwipeThresholds()) {
     /** Card rotation in degrees, proportional to the horizontal drag. */
     val rotation: Float get() = if (size.width == 0) 0f else offset.x / size.width * MAX_ROTATION
 
+    /** Puts the card back in place (e.g. when a swipe up has to ask for a folder first). */
+    fun reset() {
+        offset = Offset.Zero
+        isAnimating = false
+    }
+
     fun dragBy(delta: Offset) {
         if (!isAnimating) offset += delta
     }

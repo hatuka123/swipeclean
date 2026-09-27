@@ -7,13 +7,16 @@ import androidx.lifecycle.viewModelScope
 import com.hatuka.swipeclean.core.media.MediaFilter
 import com.hatuka.swipeclean.core.media.MediaRow
 import com.hatuka.swipeclean.core.media.SortOrder
+import com.hatuka.swipeclean.core.move.TargetPathRules
 import com.hatuka.swipeclean.core.review.DecisionState
 import com.hatuka.swipeclean.core.review.DeckBuilder
 import com.hatuka.swipeclean.core.review.SessionCounters
 import com.hatuka.swipeclean.core.review.SwipeSession
 import com.hatuka.swipeclean.data.db.BinSummary
 import com.hatuka.swipeclean.data.media.MediaRepository
+import com.hatuka.swipeclean.data.review.DecisionActions
 import com.hatuka.swipeclean.data.review.DecisionRepository
+import com.hatuka.swipeclean.data.settings.SettingsRepository
 import com.hatuka.swipeclean.ui.nav.Routes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,17 +51,28 @@ class SwipeViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val media: MediaRepository,
     private val decisions: DecisionRepository,
+    private val settings: SettingsRepository,
+    private val actions: DecisionActions,
 ) : ViewModel() {
 
     private val bucketId: Long? = savedState.get<Long>("bucket")?.takeIf { it != Routes.ALL_BUCKETS }
     private val filter: MediaFilter = savedState.get<String>("filter")
         ?.let { runCatching { MediaFilter.valueOf(it) }.getOrNull() } ?: MediaFilter.BOTH
+    private val sort: SortOrder = savedState.get<String>("sort")
+        ?.let { runCatching { SortOrder.valueOf(it) }.getOrNull() } ?: SortOrder.OLDEST_FIRST
 
     private val _state = MutableStateFlow(SwipeUiState())
     val state: StateFlow<SwipeUiState> = _state.asStateFlow()
 
     val binSummary: StateFlow<BinSummary> = decisions.binSummary()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BinSummary(0, 0))
+
+    val movesSummary: StateFlow<BinSummary> = decisions.movesSummary()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BinSummary(0, 0))
+
+    /** Folder for a plain swipe up (default Pictures/Found/). */
+    val defaultTarget: StateFlow<String> = settings.defaultTarget
+        .stateIn(viewModelScope, SharingStarted.Eagerly, TargetPathRules.DEFAULT_TARGET)
 
     private var session: SwipeSession? = null
 
@@ -68,7 +82,7 @@ class SwipeViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val rows = media.loadRows(bucketId, filter)
-            val deck = DeckBuilder.build(rows, decisions.decidedIds(), filter, SortOrder.OLDEST_FIRST)
+            val deck = DeckBuilder.build(rows, decisions.decidedIds(), filter, sort)
             session = SwipeSession(deck)
             val name = if (bucketId == null) null else rows.firstOrNull()?.let { it.bucketName ?: it.relativePath }
             publish(sourceName = name)
@@ -79,10 +93,36 @@ class SwipeViewModel @Inject constructor(
 
     fun markForDeletion() = decide(DecisionState.DELETE_PENDING)
 
-    private fun decide(decision: DecisionState) {
+    /**
+     * Swipe up: queue a move to the default folder. Returns false (and does nothing) when the
+     * default folder cannot hold this kind of item, so the screen can open the folder picker.
+     */
+    fun moveToDefault(): Boolean {
+        val item = session?.current ?: return false
+        val target = defaultTarget.value
+        if (!TargetPathRules.isValidFor(item.type, target)) return false
+        moveTo(target, makeDefault = false)
+        return true
+    }
+
+    /** Queue a move of the current item to [path]; moving into its own folder just keeps it. */
+    fun moveTo(path: String, makeDefault: Boolean) {
+        val item = session?.current ?: return
+        val target = TargetPathRules.normalize(path) ?: return
+        if (makeDefault) viewModelScope.launch { settings.setDefaultTarget(target) }
+        if (TargetPathRules.sameFolder(target, item.relativePath)) decide(DecisionState.KEEP) else decide(DecisionState.MOVE_PENDING, target)
+    }
+
+    /** Folders the current item can be moved to. */
+    suspend fun folderOptions(): List<String> {
+        val item = session?.current ?: return emptyList()
+        return actions.folderOptions(item.type, item.relativePath)
+    }
+
+    private fun decide(decision: DecisionState, targetPath: String? = null) {
         val s = session ?: return
         if (s.isFinished) return
-        val record = s.decide(decision)
+        val record = s.decide(decision, targetPath)
         publish()
         viewModelScope.launch { writes.withLock { decisions.record(record) } }
     }

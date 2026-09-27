@@ -1,6 +1,18 @@
 package com.hatuka.swipeclean.ui.swipe
 
 import android.net.Uri
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.hatuka.swipeclean.core.move.TargetPathRules
+import com.hatuka.swipeclean.ui.common.FolderPickerDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -70,10 +82,13 @@ import java.text.NumberFormat
 fun SwipeRoute(
     onBack: () -> Unit,
     onOpenBin: () -> Unit,
+    onOpenMoves: () -> Unit,
     viewModel: SwipeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val bin by viewModel.binSummary.collectAsStateWithLifecycle()
+    val moves by viewModel.movesSummary.collectAsStateWithLifecycle()
+    val defaultTarget by viewModel.defaultTarget.collectAsStateWithLifecycle()
     PreloadUpcoming(state.upcoming, viewModel::uriOf)
     SwipeContent(
         state = state,
@@ -85,6 +100,12 @@ fun SwipeRoute(
         onUnavailable = viewModel::onItemUnavailable,
         onBack = onBack,
         onOpenBin = onOpenBin,
+        moves = moves,
+        defaultTarget = defaultTarget,
+        onMoveToDefault = { viewModel.moveToDefault() },
+        onMoveTo = viewModel::moveTo,
+        loadFolderOptions = viewModel::folderOptions,
+        onOpenMoves = onOpenMoves,
     )
 }
 
@@ -113,24 +134,60 @@ fun SwipeContent(
     onUnavailable: (Long) -> Unit,
     onBack: () -> Unit,
     onOpenBin: () -> Unit,
+    moves: BinSummary = BinSummary(0, 0),
+    defaultTarget: String = TargetPathRules.DEFAULT_TARGET,
+    onMoveToDefault: () -> Boolean = { false },
+    onMoveTo: (String, Boolean) -> Unit = { _, _ -> },
+    loadFolderOptions: suspend () -> List<String> = { emptyList() },
+    onOpenMoves: () -> Unit = {},
 ) {
     var muted by rememberSaveable { mutableStateOf(true) }
+    var picking by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val current = state.current
     val cardState = remember(current?.id) { CardSwipeState() }
+    val defaultFits = current != null && TargetPathRules.isValidFor(current.type, defaultTarget)
 
-    fun commit(direction: SwipeDirection) = when (direction) {
-        SwipeDirection.RIGHT -> onKeep()
-        SwipeDirection.LEFT -> onMarkForDeletion()
-        SwipeDirection.UP -> Unit // Moves arrive in phase 3.
+    fun openPicker() {
+        cardState.reset()
+        picking = true
+    }
+
+    fun commit(direction: SwipeDirection) {
+        when (direction) {
+            SwipeDirection.RIGHT -> onKeep()
+            SwipeDirection.LEFT -> onMarkForDeletion()
+            SwipeDirection.UP -> if (!onMoveToDefault()) openPicker()
+        }
     }
 
     fun byButton(direction: SwipeDirection) {
         if (current == null || cardState.isAnimating) return
+        if (direction == SwipeDirection.UP && !defaultFits) {
+            openPicker()
+            return
+        }
         scope.launch {
             cardState.flyOut(direction)
             commit(direction)
         }
+    }
+
+    if (picking && current != null) {
+        var options by remember(current.id) { mutableStateOf<List<String>?>(null) }
+        LaunchedEffect(current.id) { options = loadFolderOptions() }
+        FolderPickerDialog(
+            options = options,
+            defaultTarget = defaultTarget,
+            onPick = { path, makeDefault ->
+                picking = false
+                scope.launch {
+                    cardState.flyOut(SwipeDirection.UP)
+                    onMoveTo(path, makeDefault)
+                }
+            },
+            onDismiss = { picking = false },
+        )
     }
 
     Scaffold(
@@ -172,7 +229,7 @@ fun SwipeContent(
             ) {
                 when {
                     state.loading -> CircularProgressIndicator()
-                    current == null -> FinishedContent(state.counters, bin, onOpenBin, onBack)
+                    current == null -> FinishedContent(state.counters, bin, moves, onOpenBin, onOpenMoves, onBack)
                     else -> {
                         state.upcoming.firstOrNull()?.let { next ->
                             SwipeCard(
@@ -200,7 +257,7 @@ fun SwipeContent(
                                 uri = uriOf(current),
                                 state = cardState,
                                 isTop = true,
-                                allowUp = false,
+                                allowUp = true,
                                 muted = muted,
                                 onToggleMute = { muted = !muted },
                                 onSwiped = ::commit,
@@ -214,8 +271,11 @@ fun SwipeContent(
             if (!state.finished) ActionButtons(
                 enabled = current != null,
                 canUndo = state.canUndo,
+                moveLabel = TargetPathRules.displayName(defaultTarget),
                 onDelete = { byButton(SwipeDirection.LEFT) },
                 onUndo = onUndo,
+                onMove = { byButton(SwipeDirection.UP) },
+                onPickFolder = { if (current != null && !cardState.isAnimating) openPicker() },
                 onKeep = { byButton(SwipeDirection.RIGHT) },
             )
         }
@@ -242,34 +302,74 @@ private fun CountersRow(counters: SessionCounters) {
     }
 }
 
-/** Physical layout (delete on the left, keep on the right) in every language. */
+/**
+ * Physical layout (undo, delete, move, keep from left to right) in every language.
+ * Move: tap = default folder, long-press or the small folder button = choose a folder.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ActionButtons(enabled: Boolean, canUndo: Boolean, onDelete: () -> Unit, onUndo: () -> Unit, onKeep: () -> Unit) {
+private fun ActionButtons(
+    enabled: Boolean,
+    canUndo: Boolean,
+    moveLabel: String,
+    onDelete: () -> Unit,
+    onUndo: () -> Unit,
+    onMove: () -> Unit,
+    onPickFolder: () -> Unit,
+    onKeep: () -> Unit,
+) {
     val colors = LocalActionColors.current
+    val moveDescription = stringResource(R.string.action_move_to, moveLabel)
+    val pickDescription = stringResource(R.string.action_pick_folder)
     ForceLtr {
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, bottom = 20.dp, top = 4.dp),
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp, top = 4.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            FilledTonalIconButton(onClick = onUndo, enabled = canUndo, modifier = Modifier.size(48.dp)) {
+                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.action_undo))
+            }
             FilledIconButton(
                 onClick = onDelete,
                 enabled = enabled,
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = colors.delete, contentColor = Color.White),
-                modifier = Modifier.size(68.dp),
+                modifier = Modifier.size(64.dp),
             ) {
-                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_mark_delete), modifier = Modifier.size(34.dp))
+                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_mark_delete), modifier = Modifier.size(32.dp))
             }
-            FilledTonalIconButton(onClick = onUndo, enabled = canUndo, modifier = Modifier.size(52.dp)) {
-                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.action_undo))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(if (enabled) colors.move else colors.move.copy(alpha = 0.38f))
+                        .combinedClickable(
+                            enabled = enabled,
+                            onClick = onMove,
+                            onLongClick = onPickFolder,
+                            onClickLabel = moveDescription,
+                            onLongClickLabel = pickDescription,
+                        )
+                        .semantics { contentDescription = moveDescription },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Filled.ArrowUpward, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp))
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(moveLabel, style = MaterialTheme.typography.labelSmall, maxLines = 1, modifier = Modifier.widthIn(max = 72.dp))
+                    IconButton(onClick = onPickFolder, enabled = enabled, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Filled.FolderOpen, contentDescription = pickDescription, modifier = Modifier.size(16.dp))
+                    }
+                }
             }
             FilledIconButton(
                 onClick = onKeep,
                 enabled = enabled,
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = colors.keep, contentColor = Color.White),
-                modifier = Modifier.size(68.dp),
+                modifier = Modifier.size(64.dp),
             ) {
                 Icon(Icons.Filled.Favorite, contentDescription = stringResource(R.string.action_keep), modifier = Modifier.size(30.dp))
             }
@@ -278,7 +378,14 @@ private fun ActionButtons(enabled: Boolean, canUndo: Boolean, onDelete: () -> Un
 }
 
 @Composable
-private fun FinishedContent(counters: SessionCounters, bin: BinSummary, onOpenBin: () -> Unit, onBack: () -> Unit) {
+private fun FinishedContent(
+    counters: SessionCounters,
+    bin: BinSummary,
+    moves: BinSummary,
+    onOpenBin: () -> Unit,
+    onOpenMoves: () -> Unit,
+    onBack: () -> Unit,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Icons.Filled.TaskAlt, contentDescription = null, tint = LocalActionColors.current.keep, modifier = Modifier.size(72.dp))
         Text(
@@ -289,6 +396,11 @@ private fun FinishedContent(counters: SessionCounters, bin: BinSummary, onOpenBi
         )
         Text(stringResource(R.string.swipe_done_body), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
+        if (moves.count > 0) {
+            Button(onClick = onOpenMoves) {
+                Text(stringResource(R.string.open_moves_count, NumberFormat.getIntegerInstance().format(moves.count)))
+            }
+        }
         if (bin.count > 0) {
             Button(onClick = onOpenBin) {
                 Text(stringResource(R.string.open_bin_count, NumberFormat.getIntegerInstance().format(bin.count), formatSize(bin.bytes)))

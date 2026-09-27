@@ -38,6 +38,8 @@ data class BucketSummary(
     val sizeBytes: Long,
     val coverId: Long?,
     val coverType: MediaType?,
+    /** Items not reviewed yet (no decision in any state). */
+    val unreviewed: Int = count,
 )
 
 data class BucketList(

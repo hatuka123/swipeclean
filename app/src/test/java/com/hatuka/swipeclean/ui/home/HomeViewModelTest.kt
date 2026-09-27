@@ -14,6 +14,7 @@ import com.hatuka.swipeclean.permissions.MediaAccessMonitor
 import com.hatuka.swipeclean.testing.FIXED_CLOCK
 import com.hatuka.swipeclean.testing.FakeMediaRepository
 import com.hatuka.swipeclean.testing.inMemoryDb
+import com.hatuka.swipeclean.testing.testSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -51,7 +52,7 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel() = HomeViewModel(repo, MediaAccessMonitor(app), DecisionRepository(db, FIXED_CLOCK))
+    private fun viewModel() = HomeViewModel(repo, MediaAccessMonitor(app), DecisionRepository(db, FIXED_CLOCK), testSettings())
 
     private fun grantAll() = shadowOf(app).grantPermissions(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
 

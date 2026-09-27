@@ -34,6 +34,23 @@ interface DecisionDao {
 
     @Query("UPDATE decision SET state = :state, targetPath = :targetPath, decidedAt = :now WHERE mediaId IN (:ids)")
     suspend fun setState(ids: List<Long>, state: DecisionState, targetPath: String?, now: Long)
+
+    /** Keeps targetPath as a record of where the item went. */
+    @Query("UPDATE decision SET state = :state, decidedAt = :now WHERE mediaId IN (:ids)")
+    suspend fun setStateKeepingTarget(ids: List<Long>, state: DecisionState, now: Long)
+
+    @Query("SELECT * FROM decision WHERE state IN (:states) ORDER BY decidedAt DESC")
+    fun observeByStates(states: List<DecisionState>): Flow<List<DecisionEntity>>
+
+    @Query("SELECT mediaId FROM decision WHERE state IN (:states) AND mediaId IN (:ids)")
+    suspend fun idsInStates(ids: List<Long>, states: List<DecisionState>): List<Long>
+
+    @Query("DELETE FROM decision WHERE state IN (:states) AND mediaId IN (:ids)")
+    suspend fun deleteInStates(ids: List<Long>, states: List<DecisionState>): Int
+
+    /** Changes whenever any decision is added, changed or removed (drives list refreshes). */
+    @Query("SELECT COUNT(*) || ':' || COALESCE(MAX(decidedAt), 0) || ':' || COALESCE(SUM(LENGTH(state)), 0) FROM decision")
+    fun observeVersion(): Flow<String>
 }
 
 @Dao

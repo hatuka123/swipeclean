@@ -48,6 +48,15 @@ class BucketAggregatorTest {
     }
 
     @Test
+    fun `counts items still to review`() {
+        val list = BucketAggregator.aggregate(rows.asSequence(), MediaFilter.BOTH, decided = setOf(1L, 2L, 5L))
+        assertEquals(3, list.all.unreviewed)
+        assertEquals(1, list.buckets.first { it.bucketId == 10L }.unreviewed)
+        assertEquals(1, list.buckets.first { it.bucketId == 30L }.unreviewed)
+        assertEquals(6, list.all.count)
+    }
+
+    @Test
     fun `cover is the most recent item`() {
         val camera = BucketAggregator.aggregate(rows.asSequence(), MediaFilter.BOTH).buckets.first { it.bucketId == 10L }
         assertEquals(2L, camera.coverId)

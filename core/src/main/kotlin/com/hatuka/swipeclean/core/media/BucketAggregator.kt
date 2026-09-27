@@ -7,13 +7,14 @@ package com.hatuka.swipeclean.core.media
  */
 object BucketAggregator {
 
-    fun aggregate(rows: Sequence<MediaRow>, filter: MediaFilter): BucketList {
+    fun aggregate(rows: Sequence<MediaRow>, filter: MediaFilter, decided: Set<Long> = emptySet()): BucketList {
         val acc = LinkedHashMap<Long, Acc>()
         val all = Acc(name = null, relativePath = null)
         for (row in rows) {
             if (!filter.includes(row.type)) continue
-            all.add(row)
-            acc.getOrPut(row.bucketId) { Acc(row.bucketName, row.relativePath) }.add(row)
+            val reviewed = row.id in decided
+            all.add(row, reviewed)
+            acc.getOrPut(row.bucketId) { Acc(row.bucketName, row.relativePath) }.add(row, reviewed)
         }
         val buckets = acc.map { (id, a) -> a.toSummary(id, a.name ?: a.relativePath?.trimEnd('/')?.substringAfterLast('/') ?: "?") }
             .sortedWith(compareByDescending<BucketSummary> { it.count }.thenBy { it.name.lowercase() })
@@ -24,13 +25,15 @@ object BucketAggregator {
 
     private class Acc(val name: String?, val relativePath: String?) {
         var count = 0
+        var unreviewed = 0
         var size = 0L
         var coverId: Long? = null
         var coverType: MediaType? = null
         var coverDate = Long.MIN_VALUE
 
-        fun add(row: MediaRow) {
+        fun add(row: MediaRow, reviewed: Boolean) {
             count++
+            if (!reviewed) unreviewed++
             size += row.sizeBytes.coerceAtLeast(0)
             if (row.dateMillis > coverDate) {
                 coverDate = row.dateMillis
@@ -40,6 +43,6 @@ object BucketAggregator {
         }
 
         fun toSummary(id: Long?, displayName: String) =
-            BucketSummary(id, displayName, relativePath, count, size, coverId, coverType)
+            BucketSummary(id, displayName, relativePath, count, size, coverId, coverType, unreviewed)
     }
 }

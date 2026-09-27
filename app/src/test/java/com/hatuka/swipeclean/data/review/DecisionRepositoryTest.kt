@@ -92,4 +92,45 @@ class DecisionRepositoryTest {
         assertNull(repo.get(9))
         assertEquals(0, todayStats()?.reviewed)
     }
+
+    @Test
+    fun `moves keep their target and stay excluded after being applied`() = runTest {
+        repo.record(SwipeRecord(row(1), DecisionState.MOVE_PENDING, "Pictures/Found/"))
+        assertEquals(1, repo.movesSummary().first().count)
+        repo.markMoved(listOf(1))
+        val moved = repo.get(1)!!
+        assertEquals(DecisionState.MOVED, moved.state)
+        assertEquals("Pictures/Found/", moved.targetPath)
+        assertEquals(0, repo.movesSummary().first().count)
+        assertEquals(setOf(1L), repo.decidedIds())
+    }
+
+    @Test
+    fun `reset brings back only kept and moved items of the folder`() = runTest {
+        repo.record(SwipeRecord(row(1), DecisionState.KEEP))
+        repo.record(SwipeRecord(row(2), DecisionState.MOVE_PENDING, "Pictures/Found/"))
+        repo.markMoved(listOf(2))
+        repo.record(SwipeRecord(row(3), DecisionState.DELETE_PENDING))
+        repo.record(SwipeRecord(row(4), DecisionState.MOVE_PENDING, "Pictures/X/"))
+        repo.record(SwipeRecord(row(5), DecisionState.KEEP)) // in another folder, not in the list
+
+        val folder = listOf(1L, 2L, 3L, 4L)
+        assertEquals(2, repo.countResettable(folder))
+        assertEquals(2, repo.resetProgress(folder))
+        assertEquals(setOf(3L, 4L, 5L), repo.decidedIds())
+        assertEquals(1, repo.binSummary().first().count)
+        assertEquals(1, repo.movesSummary().first().count)
+    }
+
+    @Test
+    fun `history lists kept and moved items`() = runTest {
+        repo.record(SwipeRecord(row(1), DecisionState.KEEP))
+        repo.record(SwipeRecord(row(2), DecisionState.DELETE_PENDING))
+        repo.record(SwipeRecord(row(3), DecisionState.MOVE_PENDING, "Pictures/Found/"))
+        repo.markMoved(listOf(3))
+        assertEquals(setOf(1L, 3L), repo.reviewedItems().first().map { it.mediaId }.toSet())
+        // Changing a kept item to "delete" sends it to the bin.
+        repo.changeDecision(listOf(1), DecisionState.DELETE_PENDING)
+        assertEquals(setOf(1L, 2L), repo.pendingDeletes().map { it.mediaId }.toSet())
+    }
 }

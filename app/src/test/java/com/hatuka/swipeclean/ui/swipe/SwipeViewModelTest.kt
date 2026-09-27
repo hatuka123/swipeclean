@@ -9,6 +9,9 @@ import com.hatuka.swipeclean.data.review.DecisionRepository
 import com.hatuka.swipeclean.testing.FIXED_CLOCK
 import com.hatuka.swipeclean.testing.FakeMediaRepository
 import com.hatuka.swipeclean.testing.inMemoryDb
+import com.hatuka.swipeclean.testing.testSettings
+import com.hatuka.swipeclean.core.media.SortOrder
+import com.hatuka.swipeclean.data.review.DecisionActions
 import com.hatuka.swipeclean.testing.row
 import com.hatuka.swipeclean.ui.nav.Routes
 import kotlinx.coroutines.Dispatchers
@@ -52,10 +55,14 @@ class SwipeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun viewModel(bucket: Long = 10) = SwipeViewModel(
-        SavedStateHandle(mapOf("bucket" to bucket, "filter" to MediaFilter.BOTH.name)),
+    private val settings = testSettings()
+
+    private fun viewModel(bucket: Long = 10, sort: SortOrder = SortOrder.OLDEST_FIRST) = SwipeViewModel(
+        SavedStateHandle(mapOf("bucket" to bucket, "filter" to MediaFilter.BOTH.name, "sort" to sort.name)),
         media,
         decisions,
+        settings,
+        DecisionActions(decisions, media, settings),
     )
 
     private suspend fun SwipeViewModel.loaded() = state.first { !it.loading }
@@ -138,5 +145,42 @@ class SwipeViewModelTest {
         assertTrue(vm.state.value.finished)
         vm.keep() // ignored
         assertEquals(1, vm.state.value.counters.reviewed)
+    }
+
+    @Test
+    fun `swipe up queues a move to the default folder and undo reverts it`() = runTest {
+        val vm = viewModel()
+        vm.loaded()
+        vm.defaultTarget.first()
+        assertTrue(vm.moveToDefault())
+        eventually { decisions.get(1)?.state == DecisionState.MOVE_PENDING }
+        assertEquals("Pictures/Found/", decisions.get(1)?.targetPath)
+        assertEquals(2L, vm.state.value.current?.id)
+        vm.undo()
+        eventually { decisions.get(1) == null }
+        assertEquals(1L, vm.state.value.current?.id)
+    }
+
+    @Test
+    fun `choosing a folder can make it the new default`() = runTest {
+        val vm = viewModel()
+        vm.loaded()
+        vm.moveTo("Pictures//Trips", makeDefault = true)
+        eventually { decisions.get(1)?.targetPath == "Pictures/Trips/" }
+        eventually { settings.defaultTarget.first() == "Pictures/Trips/" }
+    }
+
+    @Test
+    fun `moving into the folder the item is already in just keeps it`() = runTest {
+        val vm = viewModel()
+        vm.loaded()
+        vm.moveTo("DCIM/Bucket10/", makeDefault = false)
+        eventually { decisions.get(1)?.state == DecisionState.KEEP }
+    }
+
+    @Test
+    fun `sort order comes from the navigation arguments`() = runTest {
+        assertEquals(5L, viewModel(sort = SortOrder.NEWEST_FIRST).loaded().current?.id)
+        assertEquals(5L, viewModel(sort = SortOrder.LARGEST_FIRST).loaded().current?.id)
     }
 }

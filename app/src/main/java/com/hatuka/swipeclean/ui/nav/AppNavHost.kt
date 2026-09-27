@@ -23,6 +23,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.hatuka.swipeclean.core.access.MediaAccess
 import com.hatuka.swipeclean.core.media.MediaFilter
+import com.hatuka.swipeclean.core.media.SortOrder
+import com.hatuka.swipeclean.ui.moves.MovesRoute
+import com.hatuka.swipeclean.ui.reviewed.ReviewedRoute
 import com.hatuka.swipeclean.ui.bin.BinRoute
 import com.hatuka.swipeclean.permissions.MediaAccessMonitor
 import com.hatuka.swipeclean.ui.home.HomeRoute
@@ -32,11 +35,14 @@ import com.hatuka.swipeclean.ui.swipe.SwipeRoute
 object Routes {
     const val ONBOARDING = "onboarding"
     const val HOME = "home"
-    const val SWIPE = "swipe?bucket={bucket}&filter={filter}"
+    const val SWIPE = "swipe?bucket={bucket}&filter={filter}&sort={sort}"
     const val BIN = "bin"
+    const val MOVES = "moves"
+    const val REVIEWED = "reviewed"
 
     /** [bucketId] null means "All photos & videos". */
-    fun swipe(bucketId: Long?, filter: MediaFilter) = "swipe?bucket=${bucketId ?: ALL_BUCKETS}&filter=${filter.name}"
+    fun swipe(bucketId: Long?, filter: MediaFilter, sort: SortOrder = SortOrder.OLDEST_FIRST) =
+        "swipe?bucket=${bucketId ?: ALL_BUCKETS}&filter=${filter.name}&sort=${sort.name}"
 
     const val ALL_BUCKETS = -1L
 }
@@ -80,9 +86,11 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor) {
                 onboarding()
             } else {
                 HomeRoute(
-                    onOpenBucket = { bucket, filter -> nav.navigate(Routes.swipe(bucket, filter)) },
+                    onOpenBucket = { bucket, filter, sort -> nav.navigate(Routes.swipe(bucket, filter, sort)) },
                     onChangeAccess = requestAccess,
                     onOpenBin = { nav.navigate(Routes.BIN) },
+                    onOpenMoves = { nav.navigate(Routes.MOVES) },
+                    onOpenReviewed = { nav.navigate(Routes.REVIEWED) },
                 )
             }
         }
@@ -91,12 +99,23 @@ fun AppNavHost(accessMonitor: MediaAccessMonitor) {
             arguments = listOf(
                 navArgument("bucket") { type = NavType.LongType; defaultValue = Routes.ALL_BUCKETS },
                 navArgument("filter") { type = NavType.StringType; defaultValue = MediaFilter.BOTH.name },
+                navArgument("sort") { type = NavType.StringType; defaultValue = SortOrder.OLDEST_FIRST.name },
             ),
         ) {
-            SwipeRoute(onBack = { nav.popBackStack() }, onOpenBin = { nav.navigate(Routes.BIN) })
+            SwipeRoute(
+                onBack = { nav.popBackStack() },
+                onOpenBin = { nav.navigate(Routes.BIN) },
+                onOpenMoves = { nav.navigate(Routes.MOVES) },
+            )
         }
         composable(Routes.BIN) {
             BinRoute(onBack = { nav.popBackStack() })
+        }
+        composable(Routes.MOVES) {
+            MovesRoute(onBack = { nav.popBackStack() })
+        }
+        composable(Routes.REVIEWED) {
+            ReviewedRoute(onBack = { nav.popBackStack() })
         }
     }
 }

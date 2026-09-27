@@ -29,6 +29,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import com.hatuka.swipeclean.R
+import com.hatuka.swipeclean.core.move.TargetPathRules
+import com.hatuka.swipeclean.core.review.DecisionState
 import com.hatuka.swipeclean.data.db.DecisionEntity
 import com.hatuka.swipeclean.ui.common.formatSize
 import com.hatuka.swipeclean.ui.theme.LocalActionColors
@@ -37,20 +39,30 @@ import java.util.Date
 const val CHANGE_DECISION_TAG = "change_decision"
 
 /**
- * "Restore" from the bin: shows the item large and lets the user change their decision.
- * Choosing Keep replaces the deletion mark; the item stays reviewed and won't reappear in a
- * swipe session. (Moving to a folder joins these options in phase 3.)
+ * Shows one reviewed item large and lets the user change their earlier decision (from the bin,
+ * the moves list or the history). Whatever they choose, the item stays reviewed and never
+ * returns to a swipe session by itself.
  */
 @Composable
 fun ChangeDecisionDialog(
     item: DecisionEntity,
     uri: Uri?,
     onKeep: () -> Unit,
-    onLeaveInBin: () -> Unit,
+    onDelete: () -> Unit,
+    onMove: () -> Unit,
+    onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
+    val colors = LocalActionColors.current
     val date = remember(item.dateMillis) { DateFormat.getMediumDateFormat(context).format(Date(item.dateMillis)) }
-    Dialog(onDismissRequest = onLeaveInBin, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+    val state = item.state
+    val status = when (state) {
+        DecisionState.DELETE_PENDING -> stringResource(R.string.status_in_bin)
+        DecisionState.MOVE_PENDING -> stringResource(R.string.status_move_pending, TargetPathRules.displayName(item.targetPath.orEmpty()))
+        DecisionState.MOVED -> stringResource(R.string.status_moved, TargetPathRules.displayName(item.targetPath.orEmpty()))
+        else -> stringResource(R.string.status_kept)
+    }
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Column(
             Modifier
                 .fillMaxSize()
@@ -63,26 +75,44 @@ fun ChangeDecisionDialog(
                     AsyncImage(model = uri, contentDescription = null, contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize())
                 }
             }
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.decision_title), color = Color.White, style = MaterialTheme.typography.titleLarge)
                 Text(
                     stringResource(R.string.item_info, date, formatSize(item.sizeBytes), item.bucketName ?: item.relativePath.orEmpty()),
                     color = Color.White.copy(alpha = 0.8f),
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedButton(onClick = onLeaveInBin, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.decision_leave), color = Color.White)
+                Text(status, color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    if (state != DecisionState.KEEP && state != DecisionState.MOVED) {
+                        ActionButton(stringResource(R.string.decision_keep), colors.keep, onKeep, Modifier.weight(1f))
                     }
-                    Button(
-                        onClick = onKeep,
-                        colors = ButtonDefaults.buttonColors(containerColor = LocalActionColors.current.keep, contentColor = Color.White),
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(stringResource(R.string.decision_keep))
+                    if (state != DecisionState.DELETE_PENDING) {
+                        ActionButton(stringResource(R.string.decision_delete), colors.delete, onDelete, Modifier.weight(1f))
                     }
+                    ActionButton(
+                        stringResource(if (state == DecisionState.MOVE_PENDING) R.string.decision_other_folder else R.string.decision_move),
+                        colors.move,
+                        onMove,
+                        Modifier.weight(1f),
+                    )
+                }
+                OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        stringResource(if (state == DecisionState.DELETE_PENDING) R.string.decision_leave else R.string.decision_no_change),
+                        color = Color.White,
+                    )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun ActionButton(label: String, color: Color, onClick: () -> Unit, modifier: Modifier) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(containerColor = color, contentColor = Color.White),
+        modifier = modifier,
+    ) { Text(label, maxLines = 1) }
 }

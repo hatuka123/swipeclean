@@ -21,6 +21,11 @@ import com.hatuka.swipeclean.data.db.DecisionEntity
 import com.hatuka.swipeclean.data.settings.DeleteMode
 import com.hatuka.swipeclean.ui.bin.BinContent
 import com.hatuka.swipeclean.ui.bin.BinUiState
+import com.hatuka.swipeclean.ui.bin.DecisionEditorCallbacks
+import com.hatuka.swipeclean.ui.moves.MovesContent
+import com.hatuka.swipeclean.ui.moves.MovesUiState
+import com.hatuka.swipeclean.ui.reviewed.ReviewedContent
+import com.hatuka.swipeclean.ui.reviewed.ReviewedUiState
 import com.hatuka.swipeclean.ui.home.HomeContent
 import com.hatuka.swipeclean.ui.home.HomeUiState
 import com.hatuka.swipeclean.ui.onboarding.OnboardingScreen
@@ -108,6 +113,7 @@ class ScreenshotTest(private val variant: String, private val qualifiers: String
             onFilter = {},
             onOpenBucket = {},
             onChangeAccess = {},
+            movesCount = 6,
         )
     }
 
@@ -184,7 +190,7 @@ class ScreenshotTest(private val variant: String, private val qualifiers: String
             onToggle = {},
             onClearSelection = {},
             onKeepSelected = {},
-            onKeep = {},
+            editor = DecisionEditorCallbacks("Pictures/Found/", { emptyList() }, { _, _, _, _ -> }),
             onDeleteAll = {},
             onDeleteMode = {},
         )
@@ -201,4 +207,27 @@ class ScreenshotTest(private val variant: String, private val qualifiers: String
 
     @Test
     fun binEmpty() = bin(BinUiState(loading = false), "bin_empty")
+
+    private val editor = DecisionEditorCallbacks("Pictures/Found/", { emptyList() }, { _, _, _, _ -> })
+
+    private val moveItems = (1L..7L).map {
+        DecisionEntity(it, 1, "Camera", "DCIM/Camera/", it * 900_000, it == 3L, it, DecisionState.MOVE_PENDING, if (it < 5) "Pictures/Found/" else "Pictures/Trip 2024/", it)
+    }
+
+    @Test
+    fun moves() = shoot("moves") {
+        MovesContent(MovesUiState(moveItems, loading = false), SnackbarHostState(), { null }, {}, {}, editor)
+    }
+
+    @Test
+    fun reviewed() = shoot("reviewed") {
+        val items = moveItems.map { it.copy(state = if (it.mediaId % 2 == 0L) DecisionState.MOVED else DecisionState.KEEP) }
+        ReviewedContent(
+            ReviewedUiState(items, folders = listOf("Camera", "Found", "Trip 2024"), folder = null, loading = false),
+            { null },
+            {},
+            {},
+            editor,
+        )
+    }
 }

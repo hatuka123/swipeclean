@@ -3,7 +3,6 @@ package com.hatuka.swipeclean.ui.bin
 import android.content.IntentSender
 import android.util.Log
 import android.net.Uri
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hatuka.swipeclean.core.review.DecisionState
 import com.hatuka.swipeclean.core.review.DeletionReconciler
@@ -11,6 +10,7 @@ import com.hatuka.swipeclean.data.db.BinSummary
 import com.hatuka.swipeclean.data.db.DecisionEntity
 import com.hatuka.swipeclean.data.media.MediaModifier
 import com.hatuka.swipeclean.data.media.MediaRepository
+import com.hatuka.swipeclean.data.review.DecisionActions
 import com.hatuka.swipeclean.data.review.DecisionRepository
 import com.hatuka.swipeclean.data.settings.DeleteMode
 import com.hatuka.swipeclean.data.settings.SettingsRepository
@@ -54,7 +54,8 @@ class BinViewModel @Inject constructor(
     private val media: MediaRepository,
     private val modifier: MediaModifier,
     private val settings: SettingsRepository,
-) : ViewModel() {
+    actions: DecisionActions,
+) : DecisionEditingViewModel(actions, settings) {
 
     private val selection = MutableStateFlow<Set<Long>>(emptySet())
     private val busy = MutableStateFlow(false)
@@ -116,10 +117,6 @@ class BinViewModel @Inject constructor(
         val ids = selection.value.toList()
         selection.value = emptySet()
         viewModelScope.launch { decisions.changeDecision(ids, DecisionState.KEEP) }
-    }
-
-    fun keep(id: Long) {
-        viewModelScope.launch { decisions.changeDecision(listOf(id), DecisionState.KEEP) }
     }
 
     fun setDeleteMode(mode: DeleteMode) {

@@ -40,6 +40,7 @@ class VideoPlaybackTest {
 
     @Test
     fun videoPictureMoves() {
+        resetHomeFilter(compose)
         compose.waitUntil(20_000) { exists(hasText("SeedCamera")) }
         compose.onNodeWithText("Videos").performClick()
         compose.waitUntil(10_000) { !exists(hasText("SeedScreens")) }

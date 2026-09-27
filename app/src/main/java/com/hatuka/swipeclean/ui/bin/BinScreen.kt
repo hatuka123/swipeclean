@@ -5,15 +5,11 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -25,11 +21,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -55,23 +49,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
 import com.hatuka.swipeclean.R
 import com.hatuka.swipeclean.data.db.DecisionEntity
 import com.hatuka.swipeclean.data.settings.DeleteMode
-import com.hatuka.swipeclean.ui.common.MediaThumb
+import com.hatuka.swipeclean.ui.common.MediaTile
 import com.hatuka.swipeclean.ui.common.countAndSize
 import com.hatuka.swipeclean.ui.common.formatSize
 import com.hatuka.swipeclean.ui.theme.LocalActionColors
@@ -84,6 +73,7 @@ const val BIN_ITEM_TAG = "bin_item"
 fun BinRoute(onBack: () -> Unit, viewModel: BinViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val request by viewModel.request.collectAsStateWithLifecycle()
+    val defaultTarget by viewModel.defaultTarget.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val resources = LocalResources.current
     val snackbar = remember { SnackbarHostState() }
@@ -121,7 +111,7 @@ fun BinRoute(onBack: () -> Unit, viewModel: BinViewModel = hiltViewModel()) {
         onToggle = viewModel::toggleSelection,
         onClearSelection = viewModel::clearSelection,
         onKeepSelected = viewModel::keepSelected,
-        onKeep = viewModel::keep,
+        editor = viewModel.editorCallbacks(defaultTarget),
         onDeleteAll = viewModel::deleteAll,
         onDeleteMode = viewModel::setDeleteMode,
     )
@@ -137,7 +127,7 @@ fun BinContent(
     onToggle: (Long) -> Unit,
     onClearSelection: () -> Unit,
     onKeepSelected: () -> Unit,
-    onKeep: (Long) -> Unit,
+    editor: DecisionEditorCallbacks,
     onDeleteAll: () -> Unit,
     onDeleteMode: (DeleteMode) -> Unit,
 ) {
@@ -217,10 +207,11 @@ fun BinContent(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 items(state.items, key = { it.mediaId }) { item ->
-                    BinTile(
+                    MediaTile(
                         item = item,
                         uri = uriOf(item),
                         selected = item.mediaId in state.selection,
+                        tag = BIN_ITEM_TAG,
                         onClick = { if (selecting) onToggle(item.mediaId) else reviewing = item.mediaId },
                         onLongClick = { onToggle(item.mediaId) },
                     )
@@ -230,57 +221,10 @@ fun BinContent(
     }
 
     state.items.firstOrNull { it.mediaId == reviewing }?.let { item ->
-        ChangeDecisionDialog(
-            item = item,
-            uri = uriOf(item),
-            onKeep = {
-                onKeep(item.mediaId)
-                reviewing = null
-            },
-            onLeaveInBin = { reviewing = null },
-        )
+        DecisionEditor(item = item, uri = uriOf(item), callbacks = editor, onClose = { reviewing = null })
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun BinTile(item: DecisionEntity, uri: Uri?, selected: Boolean, onClick: () -> Unit, onLongClick: () -> Unit) {
-    val px = with(LocalDensity.current) { 160.dp.roundToPx() }
-    Box(
-        Modifier
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .then(if (selected) Modifier.border(3.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp)) else Modifier)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .testTag(BIN_ITEM_TAG),
-    ) {
-        if (uri != null) {
-            AsyncImage(model = MediaThumb(uri, px), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-        }
-        if (item.isVideo) {
-            Icon(Icons.Filled.PlayCircle, contentDescription = null, tint = Color.White, modifier = Modifier.align(Alignment.BottomStart).padding(4.dp).size(20.dp))
-        }
-        Text(
-            formatSize(item.sizeBytes),
-            color = Color.White,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(4.dp)
-                .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
-                .padding(horizontal = 4.dp),
-        )
-        if (selected) {
-            Icon(
-                Icons.Filled.CheckCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).background(Color.White, RoundedCornerShape(50)),
-            )
-        }
-    }
-}
 
 @Composable
 private fun DeleteAllBar(state: BinUiState, onDeleteAll: () -> Unit) {

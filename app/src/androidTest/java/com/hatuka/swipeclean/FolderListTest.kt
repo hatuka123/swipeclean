@@ -36,6 +36,7 @@ class FolderListTest {
 
     @Test
     fun showsSeededFoldersWithCounts() {
+        resetHomeFilter(compose)
         waitForText("SeedCamera")
         compose.onAllNodesWithTag(FOLDER_ROW_TAG + "all").fetchSemanticsNodes().single()
         compose.onNodeWithText("All photos & videos").assertExists()
@@ -48,16 +49,19 @@ class FolderListTest {
 
     @Test
     fun videoFilterHidesFoldersWithoutVideos() {
+        resetHomeFilter(compose)
         waitForText("SeedScreens")
         compose.onNodeWithText("Videos").performClick()
         compose.waitUntil(10_000) { compose.onAllNodes(hasText("SeedScreens")).fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithText("SeedCamera").assertExists()
         Thread.sleep(THUMBNAIL_SETTLE_MS)
         takeScreenshot("home_videos")
+        resetHomeFilter(compose)
     }
 
     @Test
     fun openingAFolderNavigatesToSwipe() {
+        resetHomeFilter(compose)
         waitForText("SeedCamera")
         compose.onNodeWithText("SeedCamera").performClick()
         compose.waitUntil(20_000) {

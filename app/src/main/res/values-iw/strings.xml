@@ -81,4 +81,55 @@
     <string name="decision_keep">לשמור</string>
     <string name="decision_leave">להשאיר בסל</string>
     <string name="more_options">אפשרויות נוספות</string>
+
+    <!-- Phase 3: moves, sort, history, reset -->
+    <string name="action_move_to">להעביר אל %1$s</string>
+    <string name="action_pick_folder">בחירת תיקייה</string>
+    <string name="picker_title">העברה לתיקייה</string>
+    <string name="picker_new_folder">שם לתיקייה חדשה</string>
+    <string name="picker_make_default">להשתמש בתיקייה הזו בכל החלקה למעלה</string>
+    <string name="picker_default_badge">ברירת מחדל</string>
+    <string name="picker_move">להעביר</string>
+    <string name="cancel">ביטול</string>
+    <string name="open_moves_count">להעביר עכשיו %1$s פריטים</string>
+    <string name="moves_title">מחכים להעברה</string>
+    <string name="moves_note">אנדרואיד יבקש אישור אחד להעברת כולם. הקשה על פריט משנה את ההחלטה.</string>
+    <string name="moves_apply_all">להעביר הכול (%1$s)</string>
+    <string name="moves_empty">אין פריטים שמחכים להעברה</string>
+    <string name="moves_empty_body">פריטים שהחלקת למעלה מחכים כאן, ואז מועברים יחד באישור אחד.</string>
+    <string name="moves_result_moved">הועברו %1$s פריטים</string>
+    <string name="moves_result_failed">לא ניתן היה להעביר %1$s פריטים, והם עדיין מחכים</string>
+    <string name="moves_result_cancelled">בוטל – שום דבר לא הועבר</string>
+    <string name="home_moves_banner">%1$s פריטים מחכים להעברה</string>
+    <string name="home_reset_hint">לחיצה ארוכה על תיקייה מאפשרת לסקור אותה שוב</string>
+    <string name="home_all_reviewed">הכול נסקר ✓</string>
+    <plurals name="to_review">
+        <item quantity="one">פריט אחד לסקירה</item>
+        <item quantity="two">%1$s לסקירה</item>
+        <item quantity="other">%1$s לסקירה</item>
+    </plurals>
+    <string name="sort_title">סדר</string>
+    <string name="sort_oldest">הישן קודם</string>
+    <string name="sort_newest">החדש קודם</string>
+    <string name="sort_largest">הגדול קודם</string>
+    <string name="reset_title">לסקור שוב את %1$s?</string>
+    <plurals name="reset_body">
+        <item quantity="one">פריט אחד שנשמר או הועבר יופיע שוב כשתחליק בתיקייה הזו. פריטים בסל או כאלה שמחכים להעברה לא יושפעו.</item>
+        <item quantity="two">%1$s פריטים שנשמרו או הועברו יופיעו שוב כשתחליק בתיקייה הזו. פריטים בסל או כאלה שמחכים להעברה לא יושפעו.</item>
+        <item quantity="other">%1$s פריטים שנשמרו או הועברו יופיעו שוב כשתחליק בתיקייה הזו. פריטים בסל או כאלה שמחכים להעברה לא יושפעו.</item>
+    </plurals>
+    <string name="reset_nothing">עדיין אין כאן מה לסקור שוב.</string>
+    <string name="reset_confirm">להציג שוב</string>
+    <string name="reviewed_title">פריטים שנסקרו</string>
+    <string name="reviewed_hint">כל מה ששמרת או העברת. הקשה על פריט משנה את ההחלטה.</string>
+    <string name="reviewed_all_folders">כל התיקיות</string>
+    <string name="reviewed_empty">עדיין לא נסקר שום דבר</string>
+    <string name="status_in_bin">בסל</string>
+    <string name="status_move_pending">מחכה להעברה אל %1$s</string>
+    <string name="status_moved">הועבר אל %1$s</string>
+    <string name="status_kept">נשמר</string>
+    <string name="decision_delete">למחוק</string>
+    <string name="decision_move">להעביר…</string>
+    <string name="decision_other_folder">תיקייה אחרת…</string>
+    <string name="decision_no_change">בלי שינוי</string>
 </resources>

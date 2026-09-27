@@ -10,10 +10,16 @@ import com.hatuka.swipeclean.core.media.MediaFilter
 import com.hatuka.swipeclean.core.media.MediaRow
 import com.hatuka.swipeclean.core.media.MediaType
 import com.hatuka.swipeclean.data.db.AppDatabase
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import com.hatuka.swipeclean.data.media.MediaRepository
+import com.hatuka.swipeclean.data.settings.SettingsRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.onStart
+import java.io.File
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -26,9 +32,9 @@ class FakeMediaRepository : MediaRepository {
 
     override fun galleryChanges(): Flow<Unit> = changes.onStart { emit(Unit) }
 
-    override suspend fun loadBuckets(filter: MediaFilter): BucketList {
+    override suspend fun loadBuckets(filter: MediaFilter, decided: Set<Long>): BucketList {
         loads++
-        return BucketAggregator.aggregate(rows.asSequence(), filter)
+        return BucketAggregator.aggregate(rows.asSequence(), filter, decided)
     }
 
     override suspend fun loadRows(bucketId: Long?, filter: MediaFilter): List<MediaRow> =
@@ -49,5 +55,13 @@ fun inMemoryDb(): AppDatabase =
     Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), AppDatabase::class.java)
         .allowMainThreadQueries()
         .build()
+
+/** A settings store backed by a fresh temp file, independent of other tests. */
+fun testSettings(): SettingsRepository = SettingsRepository(
+    PreferenceDataStoreFactory.create(
+        scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+        produceFile = { File.createTempFile("settings", ".preferences_pb").apply { delete() } },
+    ),
+)
 
 val FIXED_CLOCK: Clock = Clock.fixed(Instant.parse("2026-09-27T10:00:00Z"), ZoneOffset.UTC)

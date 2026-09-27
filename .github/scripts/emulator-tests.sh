@@ -59,6 +59,7 @@ for p in $perms; do adb shell pm grant $pkg "$p" 2>/dev/null || true; done
 run "full-access" FolderListTest
 run "video" VideoPlaybackTest
 run "swipe-flow" SwipeFlowTest
+run "move-flow" MoveFlowTest
 
 # 3) Android 14+: only "selected photos" access.
 if [ "$api" -ge 34 ]; then

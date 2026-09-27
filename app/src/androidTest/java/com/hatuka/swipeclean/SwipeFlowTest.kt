@@ -67,6 +67,7 @@ class SwipeFlowTest {
 
     @Test
     fun swipeUndoBinDeleteAndNoRepeats() {
+        resetHomeFilter(compose)
         waitForText("SeedScreens")
         compose.onNodeWithText("SeedScreens").performClick()
         waitForText("5 left")
@@ -116,7 +117,7 @@ class SwipeFlowTest {
         // Delete all: one batched system request, confirmed in the real dialog.
         assertEquals(5, seedScreensCount())
         compose.onNodeWithText("Delete all", substring = true).performClick()
-        val confirm = waitForSystemConfirm()
+        val confirm = waitForSystemConfirm(compose, "no_trash_dialog")
         takeScreenshot("trash_dialog")
         confirm.click()
         waitForText("The bin is empty", timeoutMs = 60_000)
@@ -131,22 +132,4 @@ class SwipeFlowTest {
         waitForText("1 left")
     }
 
-    /** The trash/delete confirmation is shown by MediaProvider: positive button or "Allow". */
-    private fun waitForSystemConfirm(): UiObject2 {
-        val positive = By.res("android:id/button1")
-        val byText = By.text(Pattern.compile("(?i)(allow|move to trash|delete)"))
-        val anrWait = By.res("android:id/aerr_wait")
-        val deadline = System.currentTimeMillis() + 30_000
-        while (System.currentTimeMillis() < deadline) {
-            // The Compose test clock only advances when the test syncs with Compose; without this
-            // the effect that launches the system request would not run while we wait here.
-            compose.waitForIdle()
-            device.findObject(anrWait)?.click()
-            device.wait(Until.findObject(positive), 2_000)?.let { return it }
-            device.findObject(byText)?.let { return it }
-        }
-        takeScreenshot("no_trash_dialog")
-        val screen = runCatching { compose.onRoot(useUnmergedTree = false).printToString() }.getOrDefault("")
-        error("System trash confirmation did not appear. Screen: $screen")
-    }
 }
