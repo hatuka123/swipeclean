@@ -26,10 +26,14 @@ class ProgressRepository @Inject constructor(
             stats = stats.map { DayStats(it.epochDay, it.reviewed, it.deleted, it.bytesFreed) },
             plannedDays = if (plan.enabled) plan.plannedDays else emptySet(),
             quota = plan.quota,
-            // The device time zone may change while the app runs; read it each time.
-            today = LocalDate.now(clock.withZone(ZoneId.systemDefault())),
+            today = today(),
         )
     }
+
+    // The device time zone may change while the app runs; read it each time.
+    private fun today(): LocalDate = LocalDate.now(clock.withZone(ZoneId.systemDefault()))
+
+    fun todayEpochDay(): Long = today().toEpochDay()
 
     suspend fun current(): Progress = progress.first()
 }

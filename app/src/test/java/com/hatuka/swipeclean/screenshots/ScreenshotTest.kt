@@ -163,8 +163,9 @@ class ScreenshotTest(private val variant: String, private val qualifiers: String
     @Test
     fun swipe() = shoot("swipe") {
         SwipeContent(
+            // A four-digit bin count: it must stay on screen next to the share button.
             state = swipeState(photo),
-            bin = BinSummary(37, 210_000_000),
+            bin = BinSummary(1_234, 2_100_000_000),
             uriOf = { null },
             onKeep = {},
             onMarkForDeletion = {},

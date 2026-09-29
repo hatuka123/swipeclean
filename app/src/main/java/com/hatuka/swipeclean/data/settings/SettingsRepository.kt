@@ -52,6 +52,11 @@ class SettingsRepository @Inject constructor(
         )
     }
 
+    /** Epoch day the "daily goal reached" message was last shown (see GoalCelebration). */
+    val goalCelebratedDay: Flow<Long?> = store.data.map { it[GOAL_CELEBRATED_DAY] }
+
+    suspend fun setGoalCelebratedDay(epochDay: Long) = store.edit { it[GOAL_CELEBRATED_DAY] = epochDay }
+
     /** All-time reviewed count when the last ad was shown (see AdPolicy). */
     val adReviewedMark: Flow<Int> = store.data.map { it[AD_REVIEWED_MARK] ?: 0 }
 
@@ -93,5 +98,6 @@ class SettingsRepository @Inject constructor(
         val PLAN_BUCKET_NAME = stringPreferencesKey("plan_bucket_name")
         val PLAN_FILTER = stringPreferencesKey("plan_filter")
         val AD_REVIEWED_MARK = intPreferencesKey("ad_reviewed_mark")
+        val GOAL_CELEBRATED_DAY = longPreferencesKey("goal_celebrated_day")
     }
 }

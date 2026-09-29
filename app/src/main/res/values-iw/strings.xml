@@ -184,4 +184,14 @@
     <string name="stats_last_days">14 הימים האחרונים</string>
     <string name="stats_plan_off">אפשר להפעיל תוכנית יומית כדי לקבוע יעד ולבנות רצף.</string>
     <string name="stats_set_up_plan">להגדיר תוכנית יומית</string>
+
+    <string name="share">שיתוף</string>
+    <string name="share_chooser_title">לשתף עם…</string>
+    <string name="share_text_photo">תראו איזו תמונה מצאתי כשסידרתי את הגלריה שלי עם %1$s 📸\n%2$s</string>
+    <string name="share_text_video">תראו איזה סרטון מצאתי כשסידרתי את הגלריה שלי עם %1$s 🎬\n%2$s</string>
+
+    <string name="goal_dialog_title">כל הכבוד! הגעת ליעד היומי 🎉</string>
+    <string name="goal_dialog_text">עברת היום על %1$s פריטים. רוצה להמשיך למיין?</string>
+    <string name="goal_dialog_continue">להמשיך למיין</string>
+    <string name="goal_dialog_finish">לסיים להיום</string>
 </resources>

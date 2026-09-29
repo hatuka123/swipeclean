@@ -177,4 +177,16 @@
     <string name="stats_last_days">Last 14 days</string>
     <string name="stats_plan_off">Turn on the daily plan to set a goal and build a streak.</string>
     <string name="stats_set_up_plan">Set up a daily plan</string>
+
+    <!-- Sharing a photo or video from the swipe screen -->
+    <string name="share">Share</string>
+    <string name="share_chooser_title">Share with…</string>
+    <string name="share_text_photo">Look at this photo I found while tidying up my gallery with %1$s 📸\n%2$s</string>
+    <string name="share_text_video">Look at this video I found while tidying up my gallery with %1$s 🎬\n%2$s</string>
+
+    <!-- Daily goal reached -->
+    <string name="goal_dialog_title">Well done! Daily goal reached 🎉</string>
+    <string name="goal_dialog_text">You reviewed %1$s items today. Keep sorting?</string>
+    <string name="goal_dialog_continue">Keep sorting</string>
+    <string name="goal_dialog_finish">Done for today</string>
 </resources>

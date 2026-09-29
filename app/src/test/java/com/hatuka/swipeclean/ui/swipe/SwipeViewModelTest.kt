@@ -3,6 +3,7 @@ package com.hatuka.swipeclean.ui.swipe
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.hatuka.swipeclean.core.media.MediaFilter
+import com.hatuka.swipeclean.core.plan.CleanupPlan
 import com.hatuka.swipeclean.core.review.DecisionState
 import com.hatuka.swipeclean.data.db.AppDatabase
 import com.hatuka.swipeclean.data.review.DecisionRepository
@@ -31,6 +32,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import java.time.LocalDate
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -86,6 +88,26 @@ class SwipeViewModelTest {
         assertEquals(listOf(2L, 3L, 4L), s.upcoming.map { it.id })
         assertEquals("Bucket10", s.sourceName)
         assertEquals(6, viewModel(Routes.ALL_BUCKETS).loaded().remaining)
+    }
+
+    @Test
+    fun `reaching the daily goal while swiping shows the message once a day`() = runTest {
+        settings.setPlan(CleanupPlan(enabled = true, quota = CleanupPlan.MIN_QUOTA))
+        db.stats().add(LocalDate.now(FIXED_CLOCK).toEpochDay(), reviewed = CleanupPlan.MIN_QUOTA - 1)
+        val vm = viewModel()
+        vm.loaded()
+        Thread.sleep(300) // let the view model see the "not met yet" state first
+        assertFalse(vm.goalReached.value)
+
+        vm.keep()
+        eventually { vm.goalReached.value }
+        vm.dismissGoalReached()
+
+        // Undo and reach the goal again on the same day: no second message.
+        vm.undo()
+        vm.keep()
+        Thread.sleep(300)
+        assertFalse(vm.goalReached.value)
     }
 
     @Test

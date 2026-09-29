@@ -1,5 +1,12 @@
 package com.hatuka.swipeclean.ui.swipe
 
+import androidx.activity.compose.LocalActivity
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.style.TextOverflow
+import com.hatuka.swipeclean.ui.common.shareMedia
 import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -92,6 +99,9 @@ fun SwipeRoute(
     val moves by viewModel.movesSummary.collectAsStateWithLifecycle()
     val defaultTarget by viewModel.defaultTarget.collectAsStateWithLifecycle()
     val dailyGoal by viewModel.dailyGoal.collectAsStateWithLifecycle()
+    val goalReached by viewModel.goalReached.collectAsStateWithLifecycle()
+    val activity = LocalActivity.current
+    val context = LocalContext.current
     PreloadUpcoming(state.upcoming, viewModel::uriOf)
     SwipeContent(
         state = state,
@@ -110,6 +120,13 @@ fun SwipeRoute(
         loadFolderOptions = viewModel::folderOptions,
         onOpenMoves = onOpenMoves,
         dailyGoal = dailyGoal,
+        goalReached = goalReached,
+        onContinueAfterGoal = viewModel::dismissGoalReached,
+        onFinishForToday = {
+            viewModel.dismissGoalReached()
+            activity?.finish()
+        },
+        onShare = { item -> context.shareMedia(viewModel.uriOf(item), item.type) },
     )
 }
 
@@ -145,6 +162,10 @@ fun SwipeContent(
     loadFolderOptions: suspend () -> List<String> = { emptyList() },
     onOpenMoves: () -> Unit = {},
     dailyGoal: Progress? = null,
+    goalReached: Boolean = false,
+    onContinueAfterGoal: () -> Unit = {},
+    onFinishForToday: () -> Unit = {},
+    onShare: (MediaRow) -> Unit = {},
 ) {
     var muted by rememberSaveable { mutableStateOf(true) }
     var picking by remember { mutableStateOf(false) }
@@ -195,12 +216,16 @@ fun SwipeContent(
         )
     }
 
+    if (goalReached && dailyGoal != null) {
+        GoalReachedDialog(dailyGoal.todayReviewed, onContinue = onContinueAfterGoal, onFinish = onFinishForToday)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text(state.sourceName ?: stringResource(R.string.home_all), maxLines = 1)
+                        Text(state.sourceName ?: stringResource(R.string.home_all), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (!state.loading) {
                             Text(
                                 pluralStringResource(R.plurals.items_left, state.remaining, NumberFormat.getIntegerInstance().format(state.remaining)),
@@ -215,7 +240,14 @@ fun SwipeContent(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
-                actions = { BinButton(bin.count, onOpenBin) },
+                actions = {
+                    if (current != null) {
+                        IconButton(onClick = { onShare(current) }) {
+                            Icon(Icons.Filled.Share, contentDescription = stringResource(R.string.share))
+                        }
+                    }
+                    BinButton(bin.count, onOpenBin)
+                },
             )
         },
     ) { padding ->
@@ -288,6 +320,19 @@ fun SwipeContent(
     }
 }
 
+
+/** Shown once a day when the daily goal is reached: keep sorting, or close the app for today. */
+@Composable
+private fun GoalReachedDialog(reviewed: Int, onContinue: () -> Unit, onFinish: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onContinue,
+        icon = { Icon(Icons.Filled.EmojiEvents, contentDescription = null) },
+        title = { Text(stringResource(R.string.goal_dialog_title), textAlign = TextAlign.Center) },
+        text = { Text(stringResource(R.string.goal_dialog_text, NumberFormat.getIntegerInstance().format(reviewed))) },
+        confirmButton = { Button(onClick = onContinue) { Text(stringResource(R.string.goal_dialog_continue)) } },
+        dismissButton = { TextButton(onClick = onFinish) { Text(stringResource(R.string.goal_dialog_finish)) } },
+    )
+}
 
 /** Progress toward the plan's daily goal (only while the plan is on). */
 @Composable

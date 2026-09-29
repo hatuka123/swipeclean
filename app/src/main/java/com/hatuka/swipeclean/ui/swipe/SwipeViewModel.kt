@@ -1,5 +1,6 @@
 package com.hatuka.swipeclean.ui.swipe
 
+import com.hatuka.swipeclean.core.plan.GoalCelebration
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -18,6 +19,7 @@ import com.hatuka.swipeclean.core.plan.Progress
 import com.hatuka.swipeclean.data.review.DecisionActions
 import com.hatuka.swipeclean.data.review.ProgressRepository
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import com.hatuka.swipeclean.data.review.DecisionRepository
 import com.hatuka.swipeclean.data.settings.SettingsRepository
 import com.hatuka.swipeclean.ui.nav.Routes
@@ -56,12 +58,18 @@ class SwipeViewModel @Inject constructor(
     private val decisions: DecisionRepository,
     private val settings: SettingsRepository,
     private val actions: DecisionActions,
-    progressRepository: ProgressRepository,
+    private val progressRepository: ProgressRepository,
 ) : ViewModel() {
 
+    private val goalFlow = combine(progressRepository.progress, settings.plan) { p, plan -> p.takeIf { plan.enabled } }
+
     /** Today's progress toward the daily goal; null while the plan is off. */
-    val dailyGoal: StateFlow<Progress?> = combine(progressRepository.progress, settings.plan) { p, plan -> p.takeIf { plan.enabled } }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val dailyGoal: StateFlow<Progress?> = goalFlow.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private val _goalReached = MutableStateFlow(false)
+
+    /** True while the "daily goal reached" message should be on screen. */
+    val goalReached: StateFlow<Boolean> = _goalReached.asStateFlow()
 
     private val bucketId: Long? = savedState.get<Long>("bucket")?.takeIf { it != Routes.ALL_BUCKETS }
     private val filter: MediaFilter = savedState.get<String>("filter")
@@ -95,6 +103,24 @@ class SwipeViewModel @Inject constructor(
             val name = if (bucketId == null) null else rows.firstOrNull()?.let { it.bucketName ?: it.relativePath }
             publish(sourceName = name)
         }
+        viewModelScope.launch {
+            var wasMet: Boolean? = null
+            goalFlow.collect { goal ->
+                val isMet = goal?.quotaMet
+                if (isMet != null) {
+                    val today = progressRepository.todayEpochDay()
+                    if (GoalCelebration.shouldShow(wasMet, isMet, settings.goalCelebratedDay.first(), today)) {
+                        settings.setGoalCelebratedDay(today)
+                        _goalReached.value = true
+                    }
+                }
+                wasMet = isMet
+            }
+        }
+    }
+
+    fun dismissGoalReached() {
+        _goalReached.value = false
     }
 
     fun keep() = decide(DecisionState.KEEP)
