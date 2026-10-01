@@ -28,12 +28,16 @@ Key rules:
   talks to the Play Store app and adds no INTERNET permission. The donation page opens from the side
   menu, at the end of the swipe-screen tour, and once after 50 reviews (`core/support/SupportPrompt`).
 
-## How every change is tested (no Android SDK on the owner's PC)
-1. Work on a branch (`phase-N` or a feature branch). `.github/workflows/verify.yml` runs build, lint,
-   unit tests, Robolectric screenshots (artifact `screens`) and emulator tests on API 30/33/34
-   (artifacts `emulator-apiNN`, script `.github/scripts/emulator-tests.sh`).
-2. Merge to `main` only when verify is green. `android-build.yml` builds the signed release APK,
-   creates a GitHub Release and sends it to the owner's Telegram.
+## How changes are tested (no Android SDK on the owner's PC)
+**Development mode (owner's decision, 2026-10-01):** review the code yourself, then push straight to
+`main`. `android-build.yml` builds the signed release APK (and checks the manifest), creates a GitHub
+Release and sends the APK to the owner's Telegram; the owner tests on the phone and gives feedback.
+Do not wait for or trigger `verify.yml` on every change.
+
+**Before a release to Google Play**, run the full check once: push a branch so
+`.github/workflows/verify.yml` runs build, lint, unit tests, Robolectric screenshots (artifact
+`screens`) and emulator tests on API 30/33/34 (artifacts `emulator-apiNN`, script
+`.github/scripts/emulator-tests.sh`), and fix everything until it is green.
 
 ## Pipeline rules
 - Never delete or weaken the workflows without explicit approval.
