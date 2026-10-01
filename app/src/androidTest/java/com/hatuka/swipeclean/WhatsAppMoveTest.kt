@@ -57,6 +57,7 @@ class WhatsAppMoveTest {
         assertEquals("seeded WhatsApp photos: $before", 2, before.values.sum())
 
         compose.onNodeWithText("WhatsApp Images").performClick()
+        skipTour(compose)
         waitForText("2 left")
         compose.onNodeWithContentDescription("Move to Found").performClick()
         waitForText("1 left")

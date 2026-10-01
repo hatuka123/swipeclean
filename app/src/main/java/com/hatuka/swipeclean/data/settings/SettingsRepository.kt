@@ -57,10 +57,15 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setGoalCelebratedDay(epochDay: Long) = store.edit { it[GOAL_CELEBRATED_DAY] = epochDay }
 
-    /** All-time reviewed count when the last ad was shown (see AdPolicy). */
-    val adReviewedMark: Flow<Int> = store.data.map { it[AD_REVIEWED_MARK] ?: 0 }
+    /** The swipe screen's step-by-step explanation was finished or skipped. */
+    val tourDone: Flow<Boolean> = store.data.map { it[TOUR_DONE] ?: false }
 
-    suspend fun setAdReviewedMark(totalReviewed: Int) = store.edit { it[AD_REVIEWED_MARK] = totalReviewed }
+    suspend fun setTourDone(done: Boolean) = store.edit { it[TOUR_DONE] = done }
+
+    /** The one-time "enjoying the app?" donation page was shown (see SupportPrompt). */
+    val supportPromptShown: Flow<Boolean> = store.data.map { it[SUPPORT_PROMPT_SHOWN] ?: false }
+
+    suspend fun setSupportPromptShown() = store.edit { it[SUPPORT_PROMPT_SHOWN] = true }
 
     suspend fun setPlan(plan: CleanupPlan) = store.edit {
         it[PLAN_ENABLED] = plan.enabled
@@ -97,7 +102,8 @@ class SettingsRepository @Inject constructor(
         val PLAN_BUCKET = longPreferencesKey("plan_bucket")
         val PLAN_BUCKET_NAME = stringPreferencesKey("plan_bucket_name")
         val PLAN_FILTER = stringPreferencesKey("plan_filter")
-        val AD_REVIEWED_MARK = intPreferencesKey("ad_reviewed_mark")
+        val TOUR_DONE = booleanPreferencesKey("tour_done")
+        val SUPPORT_PROMPT_SHOWN = booleanPreferencesKey("support_prompt_shown")
         val GOAL_CELEBRATED_DAY = longPreferencesKey("goal_celebrated_day")
     }
 }

@@ -21,11 +21,15 @@ Status legend: ✅ done in the app / CI · ⬜ to do in Play Console (owner) · 
 2. ⬜ Create the app: name, default language, "App", "Free".
 3. ⬜ **Play App Signing**: keep Google-managed signing and register our key as the **upload key**
    (the key in GitHub Secrets). Never lose it; if lost, Google can reset the upload key.
-4. ⬜ App content (answers in `data-safety.md`): privacy policy URL, ads (none), app access (no
+4. ⬜ Monetization → Products → In-app products: create three **consumable** products with the IDs
+   `tip_small`, `tip_medium`, `tip_large` (suggested ₪5.90 / ₪14.90 / ₪29.90) and activate them.
+   Requires a payments (merchant) profile. Donations can only be tested from a Play-installed build
+   (internal or closed testing track with a license tester); the Telegram APK shows them as unavailable.
+5. ⬜ App content (answers in `data-safety.md`): privacy policy URL, ads (none), app access (no
    login), content rating, target audience, data safety, **photo and video permissions
    declaration**.
-5. ⬜ Store listing (texts in `store-listing.md`), icon 512×512, feature graphic, screenshots.
-6. ⬜ Upload the `.aab` to the closed testing track, add testers, wait 14 days, then apply for
+6. ⬜ Store listing (texts in `store-listing.md`), icon 512×512, feature graphic, screenshots.
+7. ⬜ Upload the `.aab` to the closed testing track, add testers, wait 14 days, then apply for
    production.
 
 ## Privacy policy hosting

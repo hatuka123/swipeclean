@@ -1,7 +1,5 @@
 package com.hatuka.swipeclean.di
 
-import com.hatuka.swipeclean.ads.AdPresenter
-import com.hatuka.swipeclean.ads.NoAdPresenter
 import android.content.ContentResolver
 import android.content.Context
 import com.hatuka.swipeclean.data.media.IoDispatcher
@@ -57,7 +55,4 @@ object AppModule {
 abstract class RepositoryModule {
     @Binds
     abstract fun mediaRepository(impl: MediaStoreRepository): MediaRepository
-
-    @Binds
-    abstract fun adPresenter(impl: NoAdPresenter): AdPresenter
 }

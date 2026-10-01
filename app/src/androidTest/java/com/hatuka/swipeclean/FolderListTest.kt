@@ -64,6 +64,7 @@ class FolderListTest {
         resetHomeFilter(compose)
         waitForText("SeedCamera")
         clickText(compose, "SeedCamera")
+        skipTour(compose)
         compose.waitUntil(20_000) {
             compose.onAllNodes(hasText("12 left")).fetchSemanticsNodes().isNotEmpty()
         }

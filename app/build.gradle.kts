@@ -117,6 +117,7 @@ dependencies {
     implementation(libs.media3.ui.compose)
     implementation(libs.coil.compose)
     implementation(libs.coil.video)
+    implementation(libs.play.billing)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

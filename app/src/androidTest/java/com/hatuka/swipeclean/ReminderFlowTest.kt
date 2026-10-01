@@ -49,7 +49,7 @@ class ReminderFlowTest {
     @Test
     fun planScheduleNotificationOpensSwipe() {
         resetHomeFilter(compose)
-        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithContentDescription("Menu").performClick()
         compose.onNodeWithText("Daily plan & settings").performClick()
         waitForText(compose, "Remind me every day")
         compose.onNodeWithTag(PLAN_SWITCH_TAG).performClick()
@@ -61,14 +61,14 @@ class ReminderFlowTest {
         assertTrue("reminder not scheduled: $scheduled", scheduled.any { it.state == WorkInfo.State.ENQUEUED })
 
         compose.onNodeWithContentDescription("Back").performClick()
-        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithContentDescription("Menu").performClick()
         compose.onNodeWithText("Statistics").performClick()
         waitForText(compose, "Last 14 days")
         takeScreenshot("stats")
         compose.onNodeWithContentDescription("Back").performClick()
 
         // Turn the plan off again (other tests expect it off); the test reminder works either way.
-        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithContentDescription("Menu").performClick()
         compose.onNodeWithText("Daily plan & settings").performClick()
         waitForText(compose, "Remind me every day")
         compose.onNodeWithTag(PLAN_SWITCH_TAG).performClick()
@@ -107,7 +107,7 @@ class ReminderFlowTest {
                 it.click()
                 device.pressBack()
             }
-            runCatching { compose.onAllNodesWithContentDescription("More options").fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
+            runCatching { compose.onAllNodesWithContentDescription("Menu").fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
         }
         takeScreenshot("home_after_reminder")
     }

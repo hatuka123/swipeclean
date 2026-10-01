@@ -1,5 +1,22 @@
 package com.hatuka.swipeclean.ui.home
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.rememberDrawerState
 import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -20,14 +37,11 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.DriveFileMove
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -81,6 +95,7 @@ fun HomeRoute(
     onOpenReviewed: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenStats: () -> Unit,
+    onOpenDonate: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val progress by viewModel.progress.collectAsStateWithLifecycle()
@@ -108,6 +123,13 @@ fun HomeRoute(
         onOpenBucket = { onOpenBucket(it, state.filter, state.sort) },
         onResetBucket = { id, name -> scope.launch { reset = viewModel.resetRequest(id, name) } },
         onChangeAccess = onChangeAccess,
+        onOpenDonate = onOpenDonate,
+        onReplayTour = {
+            scope.launch {
+                viewModel.replayTour()
+                onOpenBucket(null, state.filter, state.sort)
+            }
+        },
     )
 
     reset?.let { request ->
@@ -141,91 +163,117 @@ fun HomeContent(
     onOpenStats: () -> Unit = {},
     progress: Progress? = null,
     planEnabled: Boolean = false,
+    onOpenDonate: () -> Unit = {},
+    onReplayTour: () -> Unit = {},
+    drawerInitiallyOpen: Boolean = false,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
-                actions = {
-                    BinButton(binCount, onOpenBin)
-                    OverflowMenu(onOpenReviewed, onOpenSettings, onOpenStats)
-                },
+    val drawer = rememberDrawerState(if (drawerInitiallyOpen) DrawerValue.Open else DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    fun fromDrawer(action: () -> Unit) {
+        scope.launch { drawer.close() }
+        action()
+    }
+    // Opens with the ☰ button or by pulling from the side (the right side in Hebrew).
+    ModalNavigationDrawer(
+        drawerState = drawer,
+        drawerContent = {
+            AppDrawer(
+                onOpenSettings = { fromDrawer(onOpenSettings) },
+                onOpenStats = { fromDrawer(onOpenStats) },
+                onOpenReviewed = { fromDrawer(onOpenReviewed) },
+                onOpenBin = { fromDrawer(onOpenBin) },
+                onReplayTour = { fromDrawer(onReplayTour) },
+                onOpenDonate = { fromDrawer(onOpenDonate) },
             )
         },
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = padding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding() + 16.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (state.access == MediaAccess.PARTIAL) {
-                item(key = "partial") { PartialAccessBanner(onChangeAccess) }
-            }
-            if (movesCount > 0) {
-                item(key = "moves") { MovesBanner(movesCount, onOpenMoves) }
-            }
-            if (progress != null && planEnabled) {
-                item(key = "today") { TodayCard(progress, Modifier.clickable(onClick = onOpenStats)) }
-            } else if (progress != null && progress.totalBytesFreed > 0) {
-                item(key = "freed") {
-                    TextButton(onClick = onOpenStats) {
-                        Text(stringResource(R.string.stats_freed_total, formatSize(progress.totalBytesFreed)))
-                    }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.app_name)) },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawer.open() } }) {
+                            Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.menu))
+                        }
+                    },
+                    actions = { BinButton(binCount, onOpenBin) },
+                )
+            },
+        ) { padding ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = padding.calculateTopPadding(),
+                    bottom = padding.calculateBottomPadding() + 16.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (state.access == MediaAccess.PARTIAL) {
+                    item(key = "partial") { PartialAccessBanner(onChangeAccess) }
                 }
-            }
-            item(key = "filters") { FilterRow(state.filter, onFilter, state.sort, onSort) }
-            when {
-                state.loading -> item(key = "loading") {
-                    Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
+                if (movesCount > 0) {
+                    item(key = "moves") { MovesBanner(movesCount, onOpenMoves) }
                 }
-                state.buckets.isEmpty -> item(key = "empty") {
-                    Text(
-                        stringResource(if (state.access == MediaAccess.PARTIAL) R.string.home_empty_partial else R.string.home_empty),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(vertical = 32.dp),
-                    )
-                }
-                else -> {
-                    val all = state.buckets.all
-                    item(key = "all") {
-                        val allName = stringResource(R.string.home_all)
-                        BucketRow(
-                            bucket = all.copy(name = allName),
-                            cover = coverUri(all.coverType, all.coverId),
-                            emphasized = true,
-                            onClick = { onOpenBucket(null) },
-                            onLongClick = { onResetBucket(null, allName) },
-                        )
-                    }
-                    item(key = "header") {
-                        Column(Modifier.padding(top = 12.dp, bottom = 4.dp)) {
-                            Text(
-                                stringResource(R.string.home_folders),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                            Text(
-                                stringResource(R.string.home_reset_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                if (progress != null && planEnabled) {
+                    item(key = "today") { TodayCard(progress, Modifier.clickable(onClick = onOpenStats)) }
+                } else if (progress != null && progress.totalBytesFreed > 0) {
+                    item(key = "freed") {
+                        TextButton(onClick = onOpenStats) {
+                            Text(stringResource(R.string.stats_freed_total, formatSize(progress.totalBytesFreed)))
                         }
                     }
-                    items(state.buckets.buckets, key = { it.bucketId ?: -1L }) { bucket ->
-                        BucketRow(
-                            bucket = bucket,
-                            cover = coverUri(bucket.coverType, bucket.coverId),
-                            emphasized = false,
-                            onClick = { onOpenBucket(bucket.bucketId) },
-                            onLongClick = { onResetBucket(bucket.bucketId, bucket.name) },
+                }
+                item(key = "filters") { FilterRow(state.filter, onFilter, state.sort, onSort) }
+                when {
+                    state.loading -> item(key = "loading") {
+                        Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                    state.buckets.isEmpty -> item(key = "empty") {
+                        Text(
+                            stringResource(if (state.access == MediaAccess.PARTIAL) R.string.home_empty_partial else R.string.home_empty),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(vertical = 32.dp),
                         )
+                    }
+                    else -> {
+                        val all = state.buckets.all
+                        item(key = "all") {
+                            val allName = stringResource(R.string.home_all)
+                            BucketRow(
+                                bucket = all.copy(name = allName),
+                                cover = coverUri(all.coverType, all.coverId),
+                                emphasized = true,
+                                onClick = { onOpenBucket(null) },
+                                onLongClick = { onResetBucket(null, allName) },
+                            )
+                        }
+                        item(key = "header") {
+                            Column(Modifier.padding(top = 12.dp, bottom = 4.dp)) {
+                                Text(
+                                    stringResource(R.string.home_folders),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                                Text(
+                                    stringResource(R.string.home_reset_hint),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        items(state.buckets.buckets, key = { it.bucketId ?: -1L }) { bucket ->
+                            BucketRow(
+                                bucket = bucket,
+                                cover = coverUri(bucket.coverType, bucket.coverId),
+                                emphasized = false,
+                                onClick = { onOpenBucket(bucket.bucketId) },
+                                onLongClick = { onResetBucket(bucket.bucketId, bucket.name) },
+                            )
+                        }
                     }
                 }
             }
@@ -233,25 +281,40 @@ fun HomeContent(
     }
 }
 
+/** The side menu: every screen besides the folder list, plus the tour and donations. */
 @Composable
-private fun OverflowMenu(onOpenReviewed: () -> Unit, onOpenSettings: () -> Unit, onOpenStats: () -> Unit) {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { open = true }) {
-            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.more_options))
+private fun AppDrawer(
+    onOpenSettings: () -> Unit,
+    onOpenStats: () -> Unit,
+    onOpenReviewed: () -> Unit,
+    onOpenBin: () -> Unit,
+    onReplayTour: () -> Unit,
+    onOpenDonate: () -> Unit,
+) {
+    ModalDrawerSheet {
+        Row(
+            Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(Icons.Filled.TaskAlt, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        HorizontalDivider()
+        Column(Modifier.padding(12.dp)) {
             listOf(
-                R.string.settings_title to onOpenSettings,
-                R.string.stats_title to onOpenStats,
-                R.string.reviewed_title to onOpenReviewed,
-            ).forEach { (label, action) ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(label)) },
-                    onClick = {
-                        open = false
-                        action()
-                    },
+                Triple(Icons.Filled.Settings, R.string.settings_title, onOpenSettings),
+                Triple(Icons.Filled.BarChart, R.string.stats_title, onOpenStats),
+                Triple(Icons.Filled.History, R.string.reviewed_title, onOpenReviewed),
+                Triple(Icons.Filled.DeleteOutline, R.string.bin_title, onOpenBin),
+                Triple(Icons.Filled.School, R.string.menu_tour, onReplayTour),
+                Triple(Icons.Filled.Favorite, R.string.donate_title, onOpenDonate),
+            ).forEach { (icon, label, action) ->
+                NavigationDrawerItem(
+                    icon = { Icon(icon, contentDescription = null) },
+                    label = { Text(stringResource(label)) },
+                    selected = false,
+                    onClick = action,
                 )
             }
         }

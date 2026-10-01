@@ -189,4 +189,32 @@
     <string name="goal_dialog_text">You reviewed %1$s items today. Keep sorting?</string>
     <string name="goal_dialog_continue">Keep sorting</string>
     <string name="goal_dialog_finish">Done for today</string>
+
+    <!-- Side menu -->
+    <string name="menu">Menu</string>
+    <string name="menu_tour">How it works</string>
+
+    <!-- Step-by-step explanation on the swipe screen -->
+    <string name="tour_card">Swipe the photo: right to keep it, left to mark it for deletion, up to move it to a folder.</string>
+    <string name="tour_keep">Or tap here to keep it.</string>
+    <string name="tour_delete">Tap here to mark it for deletion. Nothing is deleted until you confirm in the bin.</string>
+    <string name="tour_move">Tap here to move it to a folder. A long press picks another folder.</string>
+    <string name="tour_undo">Changed your mind? Undo the last swipe.</string>
+    <string name="tour_bin">The bin: everything you marked waits here, and you delete it all with one confirmation.</string>
+    <string name="tour_share">Found a nostalgic photo? Share it right from here.</string>
+    <string name="tour_next">Next</string>
+    <string name="tour_skip">Skip</string>
+    <string name="tour_done">Got it</string>
+
+    <!-- Donations -->
+    <string name="donate_title">Support the app</string>
+    <string name="donate_headline">Enjoying the app?</string>
+    <string name="donate_body">The app is completely free, with no ads and no tracking. If it helped you free up space, you can support its development with a small donation 💜</string>
+    <string name="donate_tip_small">☕ A coffee</string>
+    <string name="donate_tip_medium">🍕 A pizza</string>
+    <string name="donate_tip_large">🎁 A big thank-you</string>
+    <string name="donate_give">Donate</string>
+    <string name="donate_unavailable">Donations will work once the app is installed from Google Play.</string>
+    <string name="donate_thanks">Thank you so much! ❤️ Your support keeps the app going.</string>
+    <string name="donate_later">Maybe later</string>
 </resources>

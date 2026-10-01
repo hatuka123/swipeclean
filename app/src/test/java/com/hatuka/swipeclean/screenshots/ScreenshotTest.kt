@@ -1,5 +1,8 @@
 package com.hatuka.swipeclean.screenshots
 
+import com.hatuka.swipeclean.donate.Tip
+import com.hatuka.swipeclean.donate.TipJarState
+import com.hatuka.swipeclean.ui.donate.DonateContent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import androidx.activity.ComponentActivity
@@ -131,6 +134,35 @@ class ScreenshotTest(private val variant: String, private val qualifiers: String
     }
 
     @Test
+    fun homeDrawer() = shoot("home_drawer") {
+        HomeContent(
+            state = HomeUiState(MediaAccess.FULL, MediaFilter.BOTH, buckets, loading = false),
+            binCount = 37,
+            onOpenBin = {},
+            coverUri = { _, _ -> null },
+            onFilter = {},
+            onOpenBucket = {},
+            onChangeAccess = {},
+            drawerInitiallyOpen = true,
+        )
+    }
+
+    @Test
+    fun donate() = shoot("donate") {
+        DonateContent(
+            state = TipJarState.Ready(listOf(Tip("tip_small", "₪5.90"), Tip("tip_medium", "₪14.90"), Tip("tip_large", "₪29.90"))),
+            thanked = false,
+            onDonate = {},
+            onBack = {},
+        )
+    }
+
+    @Test
+    fun donateUnavailable() = shoot("donate_unavailable") {
+        DonateContent(state = TipJarState.Unavailable, thanked = false, onDonate = {}, onBack = {})
+    }
+
+    @Test
     fun homePartialAccess() = shoot("home_partial") {
         HomeContent(
             state = HomeUiState(
@@ -175,6 +207,31 @@ class ScreenshotTest(private val variant: String, private val qualifiers: String
             onOpenBin = {},
         )
     }
+
+    private fun tour(step: Int) = shoot("tour_${step + 1}") {
+        SwipeContent(
+            state = swipeState(photo),
+            bin = BinSummary(37, 210_000_000),
+            uriOf = { null },
+            onKeep = {},
+            onMarkForDeletion = {},
+            onUndo = {},
+            onUnavailable = {},
+            onBack = {},
+            onOpenBin = {},
+            showTour = true,
+            initialTourStep = step,
+        )
+    }
+
+    @Test
+    fun tourCard() = tour(0)
+
+    @Test
+    fun tourMove() = tour(3)
+
+    @Test
+    fun tourBin() = tour(5)
 
     @Test
     fun swipeFinished() = shoot("swipe_finished") {

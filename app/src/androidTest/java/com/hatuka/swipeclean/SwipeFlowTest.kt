@@ -69,6 +69,7 @@ class SwipeFlowTest {
         resetHomeFilter(compose)
         waitForText("SeedScreens")
         compose.onNodeWithText("SeedScreens").performClick()
+        skipTour(compose)
         waitForText("5 left")
         Thread.sleep(2_000) // let the photo decode for the screenshot
         takeScreenshot("swipe")
@@ -128,6 +129,7 @@ class SwipeFlowTest {
         compose.onNodeWithContentDescription("Back").performClick() // swipe → home
         waitForText("4 items", substring = true)
         compose.onNodeWithText("SeedScreens").performClick()
+        skipTour(compose)
         waitForText("1 left")
     }
 

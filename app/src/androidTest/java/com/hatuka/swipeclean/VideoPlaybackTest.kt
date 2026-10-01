@@ -45,6 +45,7 @@ class VideoPlaybackTest {
         compose.onNodeWithText("Videos").performClick()
         compose.waitUntil(10_000) { !exists(hasText("SeedScreens")) }
         clickText(compose, "SeedCamera")
+        skipTour(compose)
         compose.waitUntil(20_000) { exists(hasTestTag(SWIPE_CARD_TAG)) }
 
         // The poster disappears once the first video frame has been rendered.

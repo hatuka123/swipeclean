@@ -101,4 +101,7 @@ class HomeViewModel @Inject constructor(
             decisions.resetProgress(ids)
         }
     }
+
+    /** Shows the swipe screen's step-by-step explanation again, the next time it opens. */
+    suspend fun replayTour() = settings.setTourDone(false)
 }

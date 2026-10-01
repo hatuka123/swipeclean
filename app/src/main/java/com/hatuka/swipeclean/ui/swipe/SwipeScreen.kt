@@ -1,5 +1,6 @@
 package com.hatuka.swipeclean.ui.swipe
 
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.activity.compose.LocalActivity
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Share
@@ -92,6 +93,7 @@ fun SwipeRoute(
     onBack: () -> Unit,
     onOpenBin: () -> Unit,
     onOpenMoves: () -> Unit,
+    onOpenDonate: () -> Unit = {},
     viewModel: SwipeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -100,6 +102,7 @@ fun SwipeRoute(
     val defaultTarget by viewModel.defaultTarget.collectAsStateWithLifecycle()
     val dailyGoal by viewModel.dailyGoal.collectAsStateWithLifecycle()
     val goalReached by viewModel.goalReached.collectAsStateWithLifecycle()
+    val showTour by viewModel.showTour.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
     val context = LocalContext.current
     PreloadUpcoming(state.upcoming, viewModel::uriOf)
@@ -127,6 +130,12 @@ fun SwipeRoute(
             activity?.finish()
         },
         onShare = { item -> context.shareMedia(viewModel.uriOf(item), item.type) },
+        showTour = showTour,
+        onTourFinished = { completed ->
+            viewModel.finishTour()
+            // The tour ends with the donation page; skipping it does not.
+            if (completed) onOpenDonate()
+        },
     )
 }
 
@@ -166,8 +175,13 @@ fun SwipeContent(
     onContinueAfterGoal: () -> Unit = {},
     onFinishForToday: () -> Unit = {},
     onShare: (MediaRow) -> Unit = {},
+    showTour: Boolean = false,
+    onTourFinished: (completed: Boolean) -> Unit = {},
+    initialTourStep: Int = 0,
 ) {
     var muted by rememberSaveable { mutableStateOf(true) }
+    var tourStep by rememberSaveable { mutableIntStateOf(initialTourStep) }
+    val anchors = remember { TourAnchors() }
     var picking by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val current = state.current
@@ -220,101 +234,114 @@ fun SwipeContent(
         GoalReachedDialog(dailyGoal.todayReviewed, onContinue = onContinueAfterGoal, onFinish = onFinishForToday)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(state.sourceName ?: stringResource(R.string.home_all), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        if (!state.loading) {
-                            Text(
-                                pluralStringResource(R.plurals.items_left, state.remaining, NumberFormat.getIntegerInstance().format(state.remaining)),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(state.sourceName ?: stringResource(R.string.home_all), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            if (!state.loading) {
+                                Text(
+                                    pluralStringResource(R.plurals.items_left, state.remaining, NumberFormat.getIntegerInstance().format(state.remaining)),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
-                    }
-                },
-                actions = {
-                    if (current != null) {
-                        IconButton(onClick = { onShare(current) }) {
-                            Icon(Icons.Filled.Share, contentDescription = stringResource(R.string.share))
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                         }
-                    }
-                    BinButton(bin.count, onOpenBin)
-                },
-            )
-        },
-    ) { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding),
-        ) {
-            CountersRow(state.counters)
-            dailyGoal?.let { DailyGoalBar(it) }
-            Box(
+                    },
+                    actions = {
+                        if (current != null) {
+                            IconButton(onClick = { onShare(current) }, modifier = Modifier.tourAnchor(anchors, TourTarget.SHARE)) {
+                                Icon(Icons.Filled.Share, contentDescription = stringResource(R.string.share))
+                            }
+                        }
+                        Box(Modifier.tourAnchor(anchors, TourTarget.BIN)) { BinButton(bin.count, onOpenBin) }
+                    },
+                )
+            },
+        ) { padding ->
+            Column(
                 Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center,
+                    .fillMaxSize()
+                    .padding(padding),
             ) {
-                when {
-                    state.loading -> CircularProgressIndicator()
-                    current == null -> FinishedContent(state.counters, bin, moves, onOpenBin, onOpenMoves, onBack)
-                    else -> {
-                        state.upcoming.firstOrNull()?.let { next ->
-                            SwipeCard(
-                                item = next,
-                                uri = uriOf(next),
-                                state = remember(next.id) { CardSwipeState() },
-                                isTop = false,
-                                allowUp = false,
-                                muted = true,
-                                onToggleMute = {},
-                                onSwiped = {},
-                                onUnavailable = {},
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .graphicsLayer {
-                                        scaleX = 0.94f
-                                        scaleY = 0.94f
-                                        alpha = 0.7f
-                                    },
-                            )
-                        }
-                        key(current.id) {
-                            SwipeCard(
-                                item = current,
-                                uri = uriOf(current),
-                                state = cardState,
-                                isTop = true,
-                                allowUp = true,
-                                muted = muted,
-                                onToggleMute = { muted = !muted },
-                                onSwiped = ::commit,
-                                onUnavailable = { onUnavailable(current.id) },
-                                modifier = Modifier.fillMaxSize(),
-                            )
+                CountersRow(state.counters)
+                dailyGoal?.let { DailyGoalBar(it) }
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    when {
+                        state.loading -> CircularProgressIndicator()
+                        current == null -> FinishedContent(state.counters, bin, moves, onOpenBin, onOpenMoves, onBack)
+                        else -> {
+                            state.upcoming.firstOrNull()?.let { next ->
+                                SwipeCard(
+                                    item = next,
+                                    uri = uriOf(next),
+                                    state = remember(next.id) { CardSwipeState() },
+                                    isTop = false,
+                                    allowUp = false,
+                                    muted = true,
+                                    onToggleMute = {},
+                                    onSwiped = {},
+                                    onUnavailable = {},
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .graphicsLayer {
+                                            scaleX = 0.94f
+                                            scaleY = 0.94f
+                                            alpha = 0.7f
+                                        },
+                                )
+                            }
+                            key(current.id) {
+                                SwipeCard(
+                                    item = current,
+                                    uri = uriOf(current),
+                                    state = cardState,
+                                    isTop = true,
+                                    allowUp = true,
+                                    muted = muted,
+                                    onToggleMute = { muted = !muted },
+                                    onSwiped = ::commit,
+                                    onUnavailable = { onUnavailable(current.id) },
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .tourAnchor(anchors, TourTarget.CARD),
+                                )
+                            }
                         }
                     }
                 }
+                if (!state.finished) ActionButtons(
+                    enabled = current != null,
+                    canUndo = state.canUndo,
+                    moveLabel = TargetPathRules.displayName(defaultTarget),
+                    onDelete = { byButton(SwipeDirection.LEFT) },
+                    onUndo = onUndo,
+                    onMove = { byButton(SwipeDirection.UP) },
+                    onPickFolder = { if (current != null && !cardState.isAnimating) openPicker() },
+                    onKeep = { byButton(SwipeDirection.RIGHT) },
+                    anchors = anchors,
+                )
             }
-            if (!state.finished) ActionButtons(
-                enabled = current != null,
-                canUndo = state.canUndo,
-                moveLabel = TargetPathRules.displayName(defaultTarget),
-                onDelete = { byButton(SwipeDirection.LEFT) },
-                onUndo = onUndo,
-                onMove = { byButton(SwipeDirection.UP) },
-                onPickFolder = { if (current != null && !cardState.isAnimating) openPicker() },
-                onKeep = { byButton(SwipeDirection.RIGHT) },
+        }
+        if (showTour && current != null && !state.loading) {
+            TourOverlay(
+                anchors = anchors,
+                stepIndex = tourStep.coerceIn(0, TOUR_STEPS.lastIndex),
+                onNext = { if (tourStep >= TOUR_STEPS.lastIndex) onTourFinished(true) else tourStep++ },
+                onSkip = { onTourFinished(false) },
             )
         }
     }
@@ -383,6 +410,7 @@ private fun ActionButtons(
     onMove: () -> Unit,
     onPickFolder: () -> Unit,
     onKeep: () -> Unit,
+    anchors: TourAnchors = TourAnchors(),
 ) {
     val colors = LocalActionColors.current
     val moveDescription = stringResource(R.string.action_move_to, moveLabel)
@@ -395,18 +423,18 @@ private fun ActionButtons(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            FilledTonalIconButton(onClick = onUndo, enabled = canUndo, modifier = Modifier.size(48.dp)) {
+            FilledTonalIconButton(onClick = onUndo, enabled = canUndo, modifier = Modifier.size(48.dp).tourAnchor(anchors, TourTarget.UNDO)) {
                 Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = stringResource(R.string.action_undo))
             }
             FilledIconButton(
                 onClick = onDelete,
                 enabled = enabled,
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = colors.delete, contentColor = Color.White),
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(64.dp).tourAnchor(anchors, TourTarget.DELETE),
             ) {
                 Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_mark_delete), modifier = Modifier.size(32.dp))
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.tourAnchor(anchors, TourTarget.MOVE)) {
                 Box(
                     Modifier
                         .size(56.dp)
@@ -435,7 +463,7 @@ private fun ActionButtons(
                 onClick = onKeep,
                 enabled = enabled,
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = colors.keep, contentColor = Color.White),
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(64.dp).tourAnchor(anchors, TourTarget.KEEP),
             ) {
                 Icon(Icons.Filled.Favorite, contentDescription = stringResource(R.string.action_keep), modifier = Modifier.size(30.dp))
             }

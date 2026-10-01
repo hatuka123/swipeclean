@@ -1,5 +1,8 @@
 package com.hatuka.swipeclean.ui.nav
 
+import androidx.compose.runtime.rememberCoroutineScope
+import com.hatuka.swipeclean.ui.donate.DonateRoute
+import kotlinx.coroutines.launch
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -48,6 +51,7 @@ object Routes {
     const val REVIEWED = "reviewed"
     const val SETTINGS = "settings"
     const val STATS = "stats"
+    const val DONATE = "donate"
 
     /** Link in the reminder notification; turned into a [swipe] route by [swipeFromDeepLink]. */
     fun swipeDeepLink(bucketId: Long?, filter: MediaFilter, sort: SortOrder) =
@@ -73,7 +77,7 @@ object Routes {
 fun AppNavHost(
     accessMonitor: MediaAccessMonitor,
     reminderLinks: Flow<Uri> = emptyFlow(),
-    onSwipeSessionEnd: () -> Unit = {},
+    shouldOfferSupport: suspend () -> Boolean = { false },
 ) {
     val access by accessMonitor.access.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -120,6 +124,7 @@ fun AppNavHost(
                     onOpenReviewed = { nav.navigate(Routes.REVIEWED) },
                     onOpenSettings = { nav.navigate(Routes.SETTINGS) },
                     onOpenStats = { nav.navigate(Routes.STATS) },
+                    onOpenDonate = { nav.navigate(Routes.DONATE) },
                 )
             }
         }
@@ -135,7 +140,11 @@ fun AppNavHost(
                 onBack = { nav.popBackStack() },
                 onOpenBin = { nav.navigate(Routes.BIN) },
                 onOpenMoves = { nav.navigate(Routes.MOVES) },
+                onOpenDonate = { nav.navigate(Routes.DONATE) },
             )
+        }
+        composable(Routes.DONATE) {
+            DonateRoute(onBack = { nav.popBackStack() })
         }
         composable(Routes.BIN) {
             BinRoute(onBack = { nav.popBackStack() })
@@ -155,12 +164,15 @@ fun AppNavHost(
     }
 
     // Back from the swipe screen to Home (arrow, system Back or "back to folders") is the natural
-    // break where an ad may be shown later.
-    val sessionEnd by rememberUpdatedState(onSwipeSessionEnd)
+    // break where the one-time donation page may open (no ads in this app).
+    val offerSupport by rememberUpdatedState(shouldOfferSupport)
+    val scope = rememberCoroutineScope()
     DisposableEffect(nav) {
         var previous: String? = null
         val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
-            if (previous == Routes.SWIPE && destination.route == Routes.HOME) sessionEnd()
+            if (previous == Routes.SWIPE && destination.route == Routes.HOME) {
+                scope.launch { if (offerSupport()) nav.navigate(Routes.DONATE) }
+            }
             previous = destination.route
         }
         nav.addOnDestinationChangedListener(listener)

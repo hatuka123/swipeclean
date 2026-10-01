@@ -63,6 +63,7 @@ class MoveFlowTest {
         resetHomeFilter(compose)
         waitForText("Download")
         compose.onNodeWithText("Download").performClick()
+        skipTour(compose)
         waitForText("3 left")
 
         // 1) Move button = default folder (Pictures/Found).

@@ -194,4 +194,29 @@
     <string name="goal_dialog_text">עברת היום על %1$s פריטים. רוצה להמשיך למיין?</string>
     <string name="goal_dialog_continue">להמשיך למיין</string>
     <string name="goal_dialog_finish">לסיים להיום</string>
+
+    <string name="menu">תפריט</string>
+    <string name="menu_tour">איך זה עובד</string>
+
+    <string name="tour_card">מחליקים את התמונה: ימינה כדי לשמור, שמאלה כדי לסמן למחיקה, למעלה כדי להעביר לתיקייה.</string>
+    <string name="tour_keep">או לוחצים כאן כדי לשמור.</string>
+    <string name="tour_delete">כאן מסמנים למחיקה. שום דבר לא נמחק עד שתאשרו בסל.</string>
+    <string name="tour_move">כאן מעבירים לתיקייה. לחיצה ארוכה בוחרת תיקייה אחרת.</string>
+    <string name="tour_undo">התחרטתם? מבטלים את ההחלקה האחרונה.</string>
+    <string name="tour_bin">הסל: כל מה שסימנתם מחכה כאן, ומוחקים הכול באישור אחד.</string>
+    <string name="tour_share">מצאתם תמונה נוסטלגית? שתפו אותה ישר מכאן.</string>
+    <string name="tour_next">המשך</string>
+    <string name="tour_skip">דלג</string>
+    <string name="tour_done">הבנתי</string>
+
+    <string name="donate_title">תמיכה באפליקציה</string>
+    <string name="donate_headline">נהנית מהאפליקציה?</string>
+    <string name="donate_body">האפליקציה חינמית לגמרי, בלי פרסומות ובלי מעקב. אם היא עזרה לך לפנות מקום, אפשר לתמוך בפיתוח שלה בתרומה קטנה 💜</string>
+    <string name="donate_tip_small">☕ קפה</string>
+    <string name="donate_tip_medium">🍕 פיצה</string>
+    <string name="donate_tip_large">🎁 תודה גדולה</string>
+    <string name="donate_give">לתרום</string>
+    <string name="donate_unavailable">התרומה תעבוד כשהאפליקציה תותקן מ-Google Play.</string>
+    <string name="donate_thanks">תודה רבה! ❤️ התמיכה שלך עוזרת להמשיך לפתח את האפליקציה.</string>
+    <string name="donate_later">אולי בפעם אחרת</string>
 </resources>

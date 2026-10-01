@@ -36,15 +36,22 @@ Asked for only when the user turns on the daily cleanup plan. Used for the remin
 ### Not requested
 No exact alarms, no foreground service, no all-files access, no location, no contacts, no camera.
 
+## Ads and in-app purchases
+- Ads: **No**. The app shows no ads.
+- In-app purchases: **Yes** – optional donations (consumable tips) through Google Play Billing.
+  Payment data is handled by Google Play, not by the app, and the app keeps no purchase records
+  (each tip is consumed right away).
+
 ## Content rating (IARC questionnaire)
 - Category: **Utility, productivity, communication or other**.
 - Violence, sexuality, language, controlled substances, gambling: **No** to all.
 - Does the app allow users to interact or exchange content? **No**.
 - Does the app share the user's location? **No**.
-- Does the app allow purchases of digital goods? **No**.
+- Does the app allow purchases of digital goods? **Yes** (optional donations through Google Play).
 - Expected rating: **Everyone / PEGI 3**.
 
 ## Target audience and content
 - Target age groups: **18 and over** (simplest; the app is not designed for children).
 - Ads: **The app does not contain ads**.
+- In-app purchases: optional donations only; nothing in the app is locked behind them.
 - Government app, financial features, health, news: **No**.

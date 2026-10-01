@@ -20,6 +20,7 @@ import com.hatuka.swipeclean.data.review.DecisionActions
 import com.hatuka.swipeclean.data.review.ProgressRepository
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import com.hatuka.swipeclean.data.review.DecisionRepository
 import com.hatuka.swipeclean.data.settings.SettingsRepository
 import com.hatuka.swipeclean.ui.nav.Routes
@@ -71,6 +72,10 @@ class SwipeViewModel @Inject constructor(
     /** True while the "daily goal reached" message should be on screen. */
     val goalReached: StateFlow<Boolean> = _goalReached.asStateFlow()
 
+    /** The step-by-step explanation, until it is finished or skipped once. */
+    val showTour: StateFlow<Boolean> = settings.tourDone.map { !it }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     private val bucketId: Long? = savedState.get<Long>("bucket")?.takeIf { it != Routes.ALL_BUCKETS }
     private val filter: MediaFilter = savedState.get<String>("filter")
         ?.let { runCatching { MediaFilter.valueOf(it) }.getOrNull() } ?: MediaFilter.BOTH
@@ -121,6 +126,10 @@ class SwipeViewModel @Inject constructor(
 
     fun dismissGoalReached() {
         _goalReached.value = false
+    }
+
+    fun finishTour() {
+        viewModelScope.launch { settings.setTourDone(true) }
     }
 
     fun keep() = decide(DecisionState.KEEP)

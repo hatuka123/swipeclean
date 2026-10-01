@@ -57,6 +57,23 @@ fun clickText(compose: ComposeTestRule, text: String, attempts: Int = 5) {
 }
 
 /** True if a node with [text] exists; false (not an error) while no Compose tree is attached. */
+/**
+ * The first visit to the swipe screen shows a step-by-step tour that blocks swiping; tests skip it.
+ * Waits a few seconds for it, since it appears once the deck and the settings have loaded.
+ */
+fun skipTour(compose: ComposeTestRule, timeoutMs: Long = 5_000) {
+    val deadline = System.currentTimeMillis() + timeoutMs
+    while (System.currentTimeMillis() < deadline) {
+        compose.waitForIdle()
+        if (hasNodeWithText(compose, "Skip")) {
+            compose.onNodeWithText("Skip").performClick()
+            compose.waitForIdle()
+            return
+        }
+        Thread.sleep(250)
+    }
+}
+
 fun hasNodeWithText(compose: ComposeTestRule, text: String, substring: Boolean = false): Boolean =
     runCatching { compose.onAllNodes(hasText(text, substring = substring)).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
 

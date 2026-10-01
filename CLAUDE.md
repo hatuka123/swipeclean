@@ -22,10 +22,11 @@ Key rules:
   reappear unless the user resets a folder.
 - Swipe directions are physical in every language (right = keep even in Hebrew/RTL).
 - All strings in `res/values` + `res/values-iw`.
-- Ads are prepared but off: `core/ads/AdPolicy` (at least 50 reviews since the last ad, only when
-  leaving the swipe screen) and `app/ads/AdGate` with `NoAdPresenter`. A real ad SDK needs INTERNET,
-  so it requires the owner's explicit approval plus updates to the privacy policy and data safety
-  answers in `docs/play/`.
+- No ads (the owner chose donations instead). Donations go through Google Play Billing
+  (`donate/TipJar`, consumable products `tip_small`/`tip_medium`/`tip_large`; Play requires its
+  billing for tips to the developer, so never add external payment links). The billing library
+  talks to the Play Store app and adds no INTERNET permission. The donation page opens from the side
+  menu, at the end of the swipe-screen tour, and once after 50 reviews (`core/support/SupportPrompt`).
 
 ## How every change is tested (no Android SDK on the owner's PC)
 1. Work on a branch (`phase-N` or a feature branch). `.github/workflows/verify.yml` runs build, lint,
