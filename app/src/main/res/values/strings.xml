@@ -179,6 +179,8 @@
     <string name="stats_set_up_plan">Set up a daily plan</string>
 
     <!-- Sharing a photo or video from the swipe screen -->
+    <string name="shuffle">Shuffle the photos left</string>
+    <string name="review_again">Review this folder again</string>
     <string name="share">Share</string>
     <string name="share_chooser_title">Share with…</string>
     <string name="share_text_photo">Look at this photo I found while tidying up my gallery with %1$s 📸\n%2$s</string>

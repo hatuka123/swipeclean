@@ -4,6 +4,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.activity.compose.LocalActivity
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.style.TextOverflow
@@ -130,6 +132,9 @@ fun SwipeRoute(
             activity?.finish()
         },
         onShare = { item -> context.shareMedia(viewModel.uriOf(item), item.type) },
+        onShuffle = viewModel::shuffle,
+        loadReviewAgainCount = viewModel::reviewAgainCount,
+        onReviewAgain = viewModel::reviewAgain,
         showTour = showTour,
         onTourFinished = { completed ->
             viewModel.finishTour()
@@ -175,6 +180,9 @@ fun SwipeContent(
     onContinueAfterGoal: () -> Unit = {},
     onFinishForToday: () -> Unit = {},
     onShare: (MediaRow) -> Unit = {},
+    onShuffle: () -> Unit = {},
+    loadReviewAgainCount: suspend () -> Int = { 0 },
+    onReviewAgain: () -> Unit = {},
     showTour: Boolean = false,
     onTourFinished: (completed: Boolean) -> Unit = {},
     initialTourStep: Int = 0,
@@ -183,6 +191,7 @@ fun SwipeContent(
     var tourStep by rememberSaveable { mutableIntStateOf(initialTourStep) }
     val anchors = remember { TourAnchors() }
     var picking by remember { mutableStateOf(false) }
+    var reviewAgainCount by remember { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
     val current = state.current
     val cardState = remember(current?.id) { CardSwipeState() }
@@ -230,6 +239,18 @@ fun SwipeContent(
         )
     }
 
+    reviewAgainCount?.let { count ->
+        ReviewAgainDialog(
+            name = state.sourceName ?: stringResource(R.string.home_all),
+            count = count,
+            onConfirm = {
+                reviewAgainCount = null
+                onReviewAgain()
+            },
+            onDismiss = { reviewAgainCount = null },
+        )
+    }
+
     if (goalReached && dailyGoal != null) {
         GoalReachedDialog(dailyGoal.todayReviewed, onContinue = onContinueAfterGoal, onFinish = onFinishForToday)
     }
@@ -256,6 +277,11 @@ fun SwipeContent(
                         }
                     },
                     actions = {
+                        if (current != null && state.remaining > 1) {
+                            IconButton(onClick = { if (!cardState.isAnimating) onShuffle() }) {
+                                Icon(Icons.Filled.Shuffle, contentDescription = stringResource(R.string.shuffle))
+                            }
+                        }
                         if (current != null) {
                             IconButton(onClick = { onShare(current) }, modifier = Modifier.tourAnchor(anchors, TourTarget.SHARE)) {
                                 Icon(Icons.Filled.Share, contentDescription = stringResource(R.string.share))
@@ -282,7 +308,10 @@ fun SwipeContent(
                 ) {
                     when {
                         state.loading -> CircularProgressIndicator()
-                        current == null -> FinishedContent(state.counters, bin, moves, onOpenBin, onOpenMoves, onBack)
+                        current == null -> FinishedContent(
+                            state.counters, bin, moves, onOpenBin, onOpenMoves, onBack,
+                            onReviewAgain = { scope.launch { reviewAgainCount = loadReviewAgainCount() } },
+                        )
                         else -> {
                             state.upcoming.firstOrNull()?.let { next ->
                                 SwipeCard(
@@ -479,6 +508,7 @@ private fun FinishedContent(
     onOpenBin: () -> Unit,
     onOpenMoves: () -> Unit,
     onBack: () -> Unit,
+    onReviewAgain: () -> Unit = {},
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Icons.Filled.TaskAlt, contentDescription = null, tint = LocalActionColors.current.keep, modifier = Modifier.size(72.dp))
@@ -500,6 +530,30 @@ private fun FinishedContent(
                 Text(stringResource(R.string.open_bin_count, NumberFormat.getIntegerInstance().format(bin.count), formatSize(bin.bytes)))
             }
         }
+        OutlinedButton(onClick = onReviewAgain) {
+            Icon(Icons.Filled.Replay, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.size(8.dp))
+            Text(stringResource(R.string.review_again))
+        }
         OutlinedButton(onClick = onBack) { Text(stringResource(R.string.back_to_folders)) }
     }
+}
+
+/** Confirms "review this folder again": says what comes back and that the bin is not touched. */
+@Composable
+private fun ReviewAgainDialog(name: String, count: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.reset_title, name)) },
+        text = {
+            Text(
+                if (count == 0) stringResource(R.string.reset_nothing)
+                else pluralStringResource(R.plurals.reset_body, count, NumberFormat.getIntegerInstance().format(count))
+            )
+        },
+        confirmButton = {
+            if (count > 0) TextButton(onClick = onConfirm) { Text(stringResource(R.string.reset_confirm)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
 }

@@ -101,13 +101,7 @@ class SwipeViewModel @Inject constructor(
     private val writes = Mutex()
 
     init {
-        viewModelScope.launch {
-            val rows = media.loadRows(bucketId, filter)
-            val deck = DeckBuilder.build(rows, decisions.decidedIds(), filter, sort)
-            session = SwipeSession(deck)
-            val name = if (bucketId == null) null else rows.firstOrNull()?.let { it.bucketName ?: it.relativePath }
-            publish(sourceName = name)
-        }
+        viewModelScope.launch { loadDeck() }
         viewModelScope.launch {
             var wasMet: Boolean? = null
             goalFlow.collect { goal ->
@@ -121,6 +115,37 @@ class SwipeViewModel @Inject constructor(
                 }
                 wasMet = isMet
             }
+        }
+    }
+
+    private suspend fun loadDeck() {
+        val rows = media.loadRows(bucketId, filter)
+        val deck = DeckBuilder.build(rows, decisions.decidedIds(), filter, sort)
+        session = SwipeSession(deck)
+        val name = if (bucketId == null) null else rows.firstOrNull()?.let { it.bucketName ?: it.relativePath }
+        publish(sourceName = name ?: _state.value.sourceName)
+    }
+
+    /** Mixes the photos not reviewed yet, to skip a run the user doesn't want to sort now. */
+    fun shuffle() {
+        val s = session ?: return
+        s.shuffleRemaining()
+        publish()
+    }
+
+    /** How many kept/moved items of this folder "review again" would bring back. */
+    suspend fun reviewAgainCount(): Int =
+        decisions.countResettable(media.loadRows(bucketId, MediaFilter.BOTH).map { it.id })
+
+    /**
+     * "Review this folder again": its kept and moved items become unreviewed and the deck reloads.
+     * Items in the bin or waiting to move stay where they are.
+     */
+    fun reviewAgain() {
+        viewModelScope.launch {
+            writes.withLock { decisions.resetProgress(media.loadRows(bucketId, MediaFilter.BOTH).map { it.id }) }
+            _state.value = _state.value.copy(loading = true)
+            loadDeck()
         }
     }
 

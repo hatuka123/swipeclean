@@ -185,6 +185,8 @@
     <string name="stats_plan_off">אפשר להפעיל תוכנית יומית כדי לקבוע יעד ולבנות רצף.</string>
     <string name="stats_set_up_plan">להגדיר תוכנית יומית</string>
 
+    <string name="shuffle">ערבוב התמונות שנשארו</string>
+    <string name="review_again">לסקור שוב את התיקייה</string>
     <string name="share">שיתוף</string>
     <string name="share_chooser_title">לשתף עם…</string>
     <string name="share_text_photo">תראו איזו תמונה מצאתי כשסידרתי את הגלריה שלי עם %1$s 📸\n%2$s</string>

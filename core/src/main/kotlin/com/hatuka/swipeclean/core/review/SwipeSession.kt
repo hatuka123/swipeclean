@@ -1,6 +1,7 @@
 package com.hatuka.swipeclean.core.review
 
 import com.hatuka.swipeclean.core.media.MediaRow
+import kotlin.random.Random
 
 /** One committed swipe; undoing it removes the decision the swipe created. */
 data class SwipeRecord(
@@ -61,6 +62,22 @@ class SwipeSession(
         if (deck.getOrNull(position)?.id != record.item.id) deck.add(position, record.item)
         counters = counters.apply(record, -1)
         return record
+    }
+
+    /**
+     * Mixes the items not reviewed yet (the current one included), so the user can skip a run of
+     * photos they don't feel like sorting now. Reviewed items and the undo stack are untouched.
+     */
+    fun shuffleRemaining(random: Random = Random.Default) {
+        if (remaining < 2) return
+        val rest = deck.subList(position, deck.size)
+        val before = rest.first()
+        rest.shuffle(random)
+        // A shuffle that keeps the same photo on top looks like nothing happened.
+        if (rest.first() == before) {
+            val other = 1 + random.nextInt(rest.size - 1)
+            rest[0] = rest[other].also { rest[other] = rest[0] }
+        }
     }
 
     /** Removes the current item without a decision (deleted or moved outside the app). */

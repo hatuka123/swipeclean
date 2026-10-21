@@ -7,6 +7,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.random.Random
 
 class SwipeSessionTest {
 
@@ -86,5 +87,36 @@ class SwipeSessionTest {
     @Test(expected = IllegalArgumentException::class)
     fun `a swipe cannot produce a final state`() {
         session().decide(DecisionState.DELETED)
+    }
+
+    @Test
+    fun `shuffle mixes only the unreviewed items and always changes the current one`() {
+        repeat(20) { seed ->
+            val s = session(6)
+            s.decide(DecisionState.KEEP)
+            s.shuffleRemaining(Random(seed))
+            assertTrue(s.current?.id != 2L)
+            assertEquals(5, s.remaining)
+            val rest = buildList { while (!s.isFinished) add(s.decide(DecisionState.KEEP).item.id) }
+            assertEquals((2L..6L).toSet(), rest.toSet())
+        }
+    }
+
+    @Test
+    fun `undo after a shuffle brings back the last reviewed item`() {
+        val s = session()
+        s.decide(DecisionState.DELETE_PENDING)
+        s.shuffleRemaining(Random(1))
+        assertEquals(1L, s.undo()?.item?.id)
+        assertEquals(1L, s.current?.id)
+        assertEquals(5, s.remaining)
+    }
+
+    @Test
+    fun `shuffle with one item left does nothing`() {
+        val s = session(2)
+        s.decide(DecisionState.KEEP)
+        s.shuffleRemaining(Random(3))
+        assertEquals(2L, s.current?.id)
     }
 }
