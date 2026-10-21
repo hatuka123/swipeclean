@@ -207,6 +207,7 @@
     <string name="tour_undo">התחרטתם? מבטלים את ההחלקה האחרונה.</string>
     <string name="tour_bin">הסל: כל מה שסימנתם מחכה כאן, ומוחקים הכול באישור אחד.</string>
     <string name="tour_share">מצאתם תמונה נוסטלגית? שתפו אותה ישר מכאן.</string>
+    <string name="tour_shuffle">אין לכם כוח לתמונות האלה עכשיו? ערבוב מביא תמונות אחרות, ואת אלה תמיינו אחר כך.</string>
     <string name="tour_next">המשך</string>
     <string name="tour_skip">דלג</string>
     <string name="tour_done">הבנתי</string>

@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.hatuka.swipeclean.R
 
 /** The parts of the swipe screen the tour points at. */
-enum class TourTarget { CARD, KEEP, DELETE, MOVE, UNDO, BIN, SHARE }
+enum class TourTarget { CARD, KEEP, DELETE, MOVE, UNDO, BIN, SHARE, SHUFFLE }
 
 data class TourStep(val target: TourTarget, @StringRes val text: Int)
 
@@ -54,6 +54,7 @@ val TOUR_STEPS = listOf(
     TourStep(TourTarget.UNDO, R.string.tour_undo),
     TourStep(TourTarget.BIN, R.string.tour_bin),
     TourStep(TourTarget.SHARE, R.string.tour_share),
+    TourStep(TourTarget.SHUFFLE, R.string.tour_shuffle),
 )
 
 /** Where each tour target is on screen (root coordinates), filled in by [tourAnchor]. */

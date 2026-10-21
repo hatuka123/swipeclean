@@ -204,6 +204,7 @@
     <string name="tour_undo">Changed your mind? Undo the last swipe.</string>
     <string name="tour_bin">The bin: everything you marked waits here, and you delete it all with one confirmation.</string>
     <string name="tour_share">Found a nostalgic photo? Share it right from here.</string>
+    <string name="tour_shuffle">Not in the mood for these photos right now? Shuffle and get different ones; you can sort these later.</string>
     <string name="tour_next">Next</string>
     <string name="tour_skip">Skip</string>
     <string name="tour_done">Got it</string>

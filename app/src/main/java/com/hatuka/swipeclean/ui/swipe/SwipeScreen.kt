@@ -278,7 +278,7 @@ fun SwipeContent(
                     },
                     actions = {
                         if (current != null && state.remaining > 1) {
-                            IconButton(onClick = { if (!cardState.isAnimating) onShuffle() }) {
+                            IconButton(onClick = { if (!cardState.isAnimating) onShuffle() }, modifier = Modifier.tourAnchor(anchors, TourTarget.SHUFFLE)) {
                                 Icon(Icons.Filled.Shuffle, contentDescription = stringResource(R.string.shuffle))
                             }
                         }
