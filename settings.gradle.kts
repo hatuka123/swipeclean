@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "SwipeClean"
-include(":app", ":core")
+rootProject.name = "MyIncome"
+include(":app")

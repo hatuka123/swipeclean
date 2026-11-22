@@ -1,50 +1,31 @@
 # CLAUDE.md
 
 ## Who works on this repo
-The owner is not a programmer. Explain everything and ask questions in **simple Hebrew**.
+The owner works **only from an Android phone** and is not a programmer. Explain in **simple Hebrew**.
+The app is for a woman friend of the owner (feminine wording in the UI).
+This repo used to hold SwipeClean (ניקוי בהחלקה); the owner retired it. Its last state is tag `swipeclean-final`.
 
-## The app: SwipeClean (ניקוי בהחלקה)
-Swipe through the photo/video gallery: right = keep, left = mark for deletion (goes to the in-app bin),
-up = move to a folder. Daily cleanup plan with reminders. Personal use first, Google Play later, so
-only Play-compliant storage APIs: MediaStore + createTrash/Delete/WriteRequest. **Never** add
-MANAGE_EXTERNAL_STORAGE, INTERNET or exact-alarm permissions (CI checks the merged manifest).
+## Build and test (no Android SDK locally – CI is the only build machine)
+- Work on `dev`: `.github/workflows/verify.yml` builds, lints and runs unit tests. Merge to `main` only when green.
+- Push to `main`: `android-build.yml` (Gradle 8.11.1, JDK 17, no wrapper) builds the release APK with
+  `-PversionCode=<run_number>`, signs it with the key from GitHub Secrets (`SIGNING_KEYSTORE_BASE64`,
+  `SIGNING_STORE_PASSWORD`, `SIGNING_KEY_ALIAS` – the old SwipeClean key), creates Release `build-N`
+  and sends the APK to the owner's Telegram. Failures go to Telegram with the last 40 log lines.
+- Never change `applicationId` (`com.hatuka.income`) or the signing secrets; versionCode only from `-PversionCode`.
+- `notify.yml` sends a text message to the owner's Telegram (`gh workflow run notify.yml -f message=...`).
 
-Modules:
-- `:core` – pure Kotlin logic (no Android): bucket aggregation, access resolution, and later deck
-  building, undo stack, schedules, streaks. Put business logic here, never in Composables.
-- `:app` – `com.hatuka.swipeclean`: `data/media` (MediaStore), `data/db` (Room), `data/settings`
-  (DataStore), `permissions`, `ui/*` (Compose screens), `reminders`, `di` (Hilt).
+## The app: ההכנסות שלי
+Kotlin + Compose, Hebrew only, forced RTL, light cream/green theme (no purple). No network, no account.
+State is JSON in SharedPreferences (`data/Store`). Crashes go to `CrashLog` and show with a copy button.
 
-Key rules:
-- Swipes only write to Room. Files change only through a system confirmation dialog
-  (trash/delete from the bin, batched moves).
-- Every decision row is permanent (tombstone `DELETED` after deletion), so reviewed items never
-  reappear unless the user resets a folder.
-- Swipe directions are physical in every language (right = keep even in Hebrew/RTL).
-- All strings in `res/values` + `res/values-iw`.
-- No ads (the owner chose donations instead). Donations go through Google Play Billing
-  (`donate/TipJar`, consumable products `tip_small`/`tip_medium`/`tip_large`; Play requires its
-  billing for tips to the developer, so never add external payment links). The billing library
-  talks to the Play Store app and adds no INTERNET permission. The donation page opens from the side
-  menu, at the end of the swipe-screen tour, and once after 50 reviews (`core/support/SupportPrompt`).
-
-## How changes are tested (no Android SDK on the owner's PC)
-**Development mode (owner's decision, 2026-10-01):** review the code yourself, then push straight to
-`main`. `android-build.yml` builds the signed release APK (and checks the manifest), creates a GitHub
-Release and sends the APK to the owner's Telegram; the owner tests on the phone and gives feedback.
-Do not wait for or trigger `verify.yml` on every change.
-
-**Before a release to Google Play**, run the full check once: push a branch so
-`.github/workflows/verify.yml` runs build, lint, unit tests, Robolectric screenshots (artifact
-`screens`) and emulator tests on API 30/33/34 (artifacts `emulator-apiNN`, script
-`.github/scripts/emulator-tests.sh`), and fix everything until it is green.
-
-## Pipeline rules
-- Never delete or weaken the workflows without explicit approval.
-- Never change `applicationId` (`com.hatuka.swipeclean`) or the signing key – updates would stop
-  installing over the existing app. The key lives only in GitHub Secrets
-  (`SIGNING_KEYSTORE_BASE64`, `SIGNING_STORE_PASSWORD`, `SIGNING_KEY_ALIAS`); it is also the future
-  Play upload key, so it must never be committed.
-- `versionCode` comes from `-PversionCode` (CI run number). Do not hard-code it.
-- Builds use plain `gradle` pinned in the workflows (9.6.0, AGP 9.4.1). Keep them compatible.
-- Never put tokens, passwords or chat IDs in code, commits or logs.
+Tabs (bottom bar): עבודות · רישום · סיכום · מס.
+- `ui/JobsScreen`: workplaces – name, שכירה/עצמאית, payroll-system link (employee only, opens the browser), colour.
+- `ui/EntriesScreen`: work entries (job, from–to dates, days – follow the dates until typed, amount ₪, note)
+  and one-off incomes (title, date, amount, optional job – e.g. a bonus counts as that job's salary). Grouped by month.
+  A work entry's income belongs to the month of its end date.
+- `ui/SummaryScreen`: month / year / all-time totals, per job (days, ₪/day average), one-offs, by month.
+- `ui/TaxScreen`: tax-coordination alert computed from the data (`Totals.multiEmployerMonths`), monthly
+  deductions calculator (`data/Tax`, 2026 rules: brackets 10/14/20/31/35/47/50 with the widened 20% ≤19,000 and
+  31% ≤25,100, credit point 242, BL+health 4.27% ≤7,703 / 12.17% ≤51,910), with/without-coordination comparison
+  (second employer 47%), self-employed rough estimate, FAQ. Credit points (default 2.75) and pension % are settings.
+  **Update `data/Tax` every January** with the new year's numbers.
